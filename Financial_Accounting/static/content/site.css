@@ -1,6 +1,6 @@
 body {
-    padding-top: 50px;
-    padding-bottom: 20px;
+    margin: 0;
+    padding: 0;
 }
 
 /* Set padding to keep content from hitting the edges */
@@ -40,3 +40,30 @@ input[type="checkbox"].input-validation-error {
 .validation-summary-valid {
     display: none;
 }
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 130px;
+    height: 100vh;
+    background-color: black;
+    color: white;
+}
+
+    .sidebar .nav {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+        .sidebar .nav li a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px;
+        }
+
+            .sidebar .nav li a:hover {
+                background-color: #333;
+            }
