@@ -38,6 +38,9 @@
     <Compile Include="files_module\security.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="files_module\validation.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="routes.py" />
   </ItemGroup>
   <ItemGroup>
