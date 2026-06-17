@@ -5,40 +5,24 @@ from urllib.parse import unquote
 from files_module.auth import register_user
 from files_module.auth import login_user
 
-from files_module.validation import validate_registration
+from validations.auth_validation import validate_registration
 
 @route('/')
-@view('login')
-def login():
-    return dict(
-        title='Вход',
-        year=datetime.now().year
-    )
-
-
-@route('/income')
-@view('income')
-def income():
-    return dict(
-        title='Доходы',
-        year=datetime.now().year
-    )
-
-
-@route('/expenses')
-@view('expenses')
-def expenses():
-    return dict(
-        title='Расходы',
-        year=datetime.now().year
-    )
 def home():
     return template(
-        'login.tpl',
-        title='Авторизация',
-        error='',
-        errors={},
-        username=''
+        'hello_page.tpl'
+    )
+
+@route('/login_page')
+def login_page():
+    mode = request.query.mode or 'login'
+
+    return template(
+        'login.tpl', 
+        error='', 
+        errors={}, 
+        username='', 
+        mode=mode
     )
 
 @route('/login', method='POST')
@@ -58,10 +42,20 @@ def login():
 
     return template(
         'login.tpl',
-        title='Авторизация',
         error='Неверный логин или пароль',
         errors={},
-        username=username
+        username=username,
+        password='',
+        mode='login'
+    )
+
+@route('/register_page')
+def register_page():
+    return template(
+    'register.tpl',
+    error='',
+    errors={},
+    mode=None
     )
 
 @route('/register', method='POST')
@@ -82,9 +76,13 @@ def register():
 
         return template(
             'login.tpl',
-            title='Авторизация',
             error='',
-            errors = errors
+            errors=errors,
+            username=username,
+            email=email,
+            password=password,
+            password2=password2,
+            mode='register'
         )
 
     ok, msg = register_user(
@@ -97,20 +95,16 @@ def register():
 
         return template(
             'login.tpl',
-            title='Авторизация',
             error=msg,
-            errors={}
+            errors={},
+            username=username,
+            email=email,
+            password=password,
+            password2=password2,
+            mode='register'
         )
 
-
-@route('/goals')
-@view('goals')
-def goals():
-    return dict(
-        title='Копилка',
-        year=datetime.now().year
-    redirect('/')
-
+    redirect('/login_page')
 
 @route('/main')
 def main():
@@ -124,6 +118,34 @@ def main():
         title='Главная',
         username=username
     )
+
+
+@route('/income')
+@view('income')
+def income():
+    return dict(
+        title='Доходы',
+        year=datetime.now().year
+    )
+
+
+@route('/expenses')
+@view('expenses')
+def expenses():
+    return dict(
+        title='Расходы',
+        year=datetime.now().year
+    )
+
+
+@route('/goals')
+@view('goals')
+def goals():
+    return dict(
+        title='Копилка',
+        year=datetime.now().year
+    )
+
 
 
 @route('/personal_account')

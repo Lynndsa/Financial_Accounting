@@ -1,26 +1,21 @@
-% rebase('layout.tpl', title=title)
-
 <head>
     <meta charset="utf-8">
     <title>Авторизация</title>
 </head>
 <body>
 
-<div id="login_block">
+% if mode == 'register':
+    <div id="login_block" style="display:none;">
+% else:
+    <div id="login_block">
+% end
 
-    <h2>Название</h2>
+    <h2>Авторизация</h2>
+    <h3>Введите ваш логин и пароль</h3>
 
     % if error:
         <div>
             {{error}}
-        </div>
-    % end
-
-    % if errors:
-        <div>
-            % for field, message in errors.items():
-                <p>{{message}}</p>
-            % end
         </div>
     % end
 
@@ -40,13 +35,26 @@
 
 </div>
 
-<div id="register_block" style="display:none;">
+% if mode != 'register':
+    <div id="register_block" style="display:none;">
+% else:
+    <div id="register_block">
+% end
 
     <button onclick="showLogin()">
         Назад
     </button>
 
-    <h2>Название</h2>
+    <h2>Регистрация</h2>
+    <h3>Введите ваш логин, почту, пароль</h3>
+
+    % if errors:
+        <div>
+            % for field, message in errors.items():
+                <p>{{message}}</p>
+            % end
+        </div>
+    % end
 
     <form action="/register" method="post">
 
