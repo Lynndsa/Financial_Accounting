@@ -8,6 +8,30 @@ from files_module.auth import login_user
 from files_module.validation import validate_registration
 
 @route('/')
+@view('login')
+def login():
+    return dict(
+        title='Вход',
+        year=datetime.now().year
+    )
+
+
+@route('/income')
+@view('income')
+def income():
+    return dict(
+        title='Доходы',
+        year=datetime.now().year
+    )
+
+
+@route('/expenses')
+@view('expenses')
+def expenses():
+    return dict(
+        title='Расходы',
+        year=datetime.now().year
+    )
 def home():
     return template(
         'login.tpl',
@@ -78,6 +102,13 @@ def register():
             errors={}
         )
 
+
+@route('/goals')
+@view('goals')
+def goals():
+    return dict(
+        title='Копилка',
+        year=datetime.now().year
     redirect('/')
 
 
@@ -94,11 +125,11 @@ def main():
         username=username
     )
 
-@route('/about')
-def about():
-    """Renders the about page."""
+
+@route('/personal_account')
+@view('personal_account')
+def personal_account():
     return dict(
-        title='About',
-        message='Your application description page.',
+        title='Личный кабинет',
         year=datetime.now().year
     )
