@@ -36,20 +36,32 @@
     <Compile Include="files_module\auth.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="files_module\goals.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="files_module\security.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="files_module\validation.py">
+    <Compile Include="validations\auth_validation.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="routes.py" />
+    <Compile Include="tests\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="validations\goals_validation.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="database\" />
     <Folder Include="files_module\" />
+    <Folder Include="validations\" />
+    <Folder Include="tests\" />
     <Folder Include="static\" />
     <Folder Include="static\content\" />
     <Folder Include="static\fonts\" />
+    <Folder Include="static\img\" />
     <Folder Include="static\scripts\" />
     <Folder Include="views\" />
   </ItemGroup>
@@ -57,6 +69,12 @@
     <Content Include="requirements.txt" />
     <Content Include="static\content\bootstrap.css" />
     <Content Include="static\content\bootstrap.min.css" />
+    <Content Include="static\content\personal_account.css" />
+    <Content Include="static\content\login.css" />
+    <Content Include="static\content\income.css" />
+    <Content Include="static\content\hello_page.css" />
+    <Content Include="static\content\goals.css" />
+    <Content Include="static\content\expenses.css" />
     <Content Include="static\content\site.css" />
     <Content Include="static\fonts\glyphicons-halflings-regular.eot" />
     <Content Include="static\fonts\glyphicons-halflings-regular.svg" />
@@ -77,8 +95,11 @@
     <Content Include="static\scripts\respond.js" />
     <Content Include="static\scripts\respond.min.js" />
     <Content Include="static\scripts\_references.js" />
-    <Content Include="views\about.tpl" />
-    <Content Include="views\contact.tpl" />
+    <Content Include="views\hello_page.tpl" />
+    <Content Include="views\goals.tpl" />
+    <Content Include="views\expenses.tpl" />
+    <Content Include="views\income.tpl" />
+    <Content Include="views\personal_account.tpl" />
     <Content Include="views\login.tpl" />
     <Content Include="views\layout.tpl" />
   </ItemGroup>
