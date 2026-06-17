@@ -1,79 +1,84 @@
-from database import get_connection
-import bcrypt
+from database.db import get_connection
+from files_module.security import hash_password, verify_password
 
 
 def register_user(username, email, password):
+
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute(
-        "SELECT id_user FROM user WHERE username=%s",
-        (username,)
-    )
+    try:
 
-    if cur.fetchone():
-        return False, "Логин уже существует"
+        cur.execute(
+            "SELECT id_user FROM user WHERE username=%s",
+            (username,)
+        )
 
-    cur.execute(
-        "SELECT email FROM profiles WHERE email=%s",
-        (email,)
-    )
+        if cur.fetchone():
+            return False, "Логин уже существует"
 
-    if cur.fetchone():
-        return False, "Email уже существует"
+        cur.execute(
+            "SELECT email FROM profiles WHERE email=%s",
+            (email,)
+        )
 
-    password_hash = bcrypt.hashpw(
-        password.encode(),
-        bcrypt.gensalt()
-    ).decode()
+        if cur.fetchone():
+            return False, "Email уже существует"
 
-    cur.execute("""
-        INSERT INTO user
-        (username, password)
-        VALUES (%s, %s)
-    """, (
-        username,
-        password_hash
-    ))
+        password_hash = hash_password(password)
 
-    user_id = cur.lastrowid
+        cur.execute("""
+            INSERT INTO user
+            (username, password)
+            VALUES (%s, %s)
+        """, (
+            username,
+            password_hash
+        ))
 
-    cur.execute("""
-        INSERT INTO profiles
-        (email, id_user)
-        VALUES (%s, %s)
-    """, (
-        email,
-        user_id
-    ))
+        user_id = cur.lastrowid
 
-    conn.commit()
+        cur.execute("""
+            INSERT INTO profiles
+            (email, id_user)
+            VALUES (%s, %s)
+        """, (
+            email,
+            user_id
+        ))
 
-    cur.close()
-    conn.close()
+        conn.commit()
 
-    return True, "OK"
+        return True, "OK"
+
+    finally:
+        cur.close()
+        conn.close()
+
 
 def login_user(username, password):
 
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT *
-        FROM user
-        WHERE username=%s
-    """, (username,))
+    try:
 
-    user = cur.fetchone()
+        cur.execute("""
+            SELECT *
+            FROM user
+            WHERE username=%s
+        """, (username,))
 
-    cur.close()
-    conn.close()
+        user = cur.fetchone()
 
-    if not user:
-        return False
+        if not user:
+            return False
 
-    return bcrypt.checkpw(
-        password.encode(),
-        user["password"].encode()
-    )
+        return verify_password(
+            password,
+            user["password"]
+        )
+
+    finally:
+        cur.close()
+        conn.close()

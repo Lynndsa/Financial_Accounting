@@ -23,7 +23,7 @@
                 <ul class="nav navbar-nav">
                     <li><a href="/">Login</a></li>
                     <li><a href="/about">About</a></li>
-                    <li><a href="/contact">Contact</a></li>
+                    <li><a href="/main">Main</a></li>
                 </ul>
             </div>
         </div>
@@ -33,7 +33,7 @@
         {{!base}}
         <hr />
         <footer>
-            <p>&copy; {{ year }} - Financial accounting</p>
+            <p>&copy; Financial accounting</p>
         </footer>
     </div>
 

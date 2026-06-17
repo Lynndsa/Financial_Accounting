@@ -1,4 +1,4 @@
-% rebase('layout.tpl', title='Authorization', year=year)
+% rebase('layout.tpl', title=title)
 
 <head>
     <meta charset="utf-8">
@@ -9,6 +9,20 @@
 <div id="login_block">
 
     <h2>Название</h2>
+
+    % if error:
+        <div>
+            {{error}}
+        </div>
+    % end
+
+    % if errors:
+        <div>
+            % for field, message in errors.items():
+                <p>{{message}}</p>
+            % end
+        </div>
+    % end
 
     <form action="/login" method="post">
         <input type="text" name="username" placeholder="Логин"><br><br>
