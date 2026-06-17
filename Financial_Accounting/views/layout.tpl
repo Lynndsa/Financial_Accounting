@@ -22,7 +22,7 @@
         {{!base}}
         <hr />
         <footer>
-            <p>&copy; {{ year }} - My Bottle Application</p>
+            <p>&copy; {{ year }} - Financial accounting</p>
         </footer>
     </div>
 

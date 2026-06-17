@@ -30,9 +30,23 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="app.py" />
+    <Compile Include="database\db.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="files_module\auth.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="files_module\security.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="files_module\validation.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="routes.py" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="database\" />
+    <Folder Include="files_module\" />
     <Folder Include="static\" />
     <Folder Include="static\content\" />
     <Folder Include="static\fonts\" />
@@ -65,7 +79,7 @@
     <Content Include="static\scripts\_references.js" />
     <Content Include="views\about.tpl" />
     <Content Include="views\contact.tpl" />
-    <Content Include="views\index.tpl" />
+    <Content Include="views\login.tpl" />
     <Content Include="views\layout.tpl" />
   </ItemGroup>
   <ItemGroup>
