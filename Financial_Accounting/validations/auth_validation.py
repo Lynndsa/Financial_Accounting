@@ -10,7 +10,7 @@ def validate_registration(username, email, password, password2):
     if not username:
         errors["username"] = "Логин не может быть пустым"
     elif len(username) < 4:
-        errors["username"] = "Минимум 4 символа"
+        errors["username"] = "Минимум 4 символа в логине"
 
     if not email:
         errors["email"] = "Email не может быть пустым"
@@ -20,7 +20,7 @@ def validate_registration(username, email, password, password2):
     if not password:
         errors["password"] = "Пароль не может быть пустым"
     elif len(password) < 6:
-        errors["password"] = "Минимум 6 символов"
+        errors["password"] = "Минимум 6 символов в пароле"
 
     if password != password2:
         errors["password2"] = "Пароли не совпадают"

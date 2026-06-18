@@ -27,7 +27,7 @@
         {{!base}}
         <hr />
         <footer>
-            <p>&copy; {{ year }} - Financial accounting</p>
+            <p>&copy; Financial accounting</p>
         </footer>
     </div>
 

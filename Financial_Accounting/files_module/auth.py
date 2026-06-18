@@ -1,79 +1,77 @@
-from database import get_connection
-import bcrypt
+import pymysql, hashlib
+from database.db import get_connection
 
 
-def register_user(username, email, password):
+def register_user(name, lastname, surname, datebirth, username, email, password):
+
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute(
-        "SELECT id_user FROM user WHERE username=%s",
-        (username,)
-    )
+    try:
 
-    if cur.fetchone():
-        return False, "Логин уже существует"
+        cur.callproc(
+            'create_new_user',
+            (
+                name,
+                lastname,
+                surname,
+                datebirth,
+                username,
+                email,
+                password
+            )
+        )
 
-    cur.execute(
-        "SELECT email FROM profiles WHERE email=%s",
-        (email,)
-    )
+        conn.commit()
 
-    if cur.fetchone():
-        return False, "Email уже существует"
+        return True, 'OK'
 
-    password_hash = bcrypt.hashpw(
-        password.encode(),
-        bcrypt.gensalt()
-    ).decode()
+    except pymysql.err.IntegrityError as e:
 
-    cur.execute("""
-        INSERT INTO user
-        (username, password)
-        VALUES (%s, %s)
-    """, (
-        username,
-        password_hash
-    ))
+        conn.rollback()
 
-    user_id = cur.lastrowid
+        if "user.username" in str(e):
+            return False, "Логин уже существует"
 
-    cur.execute("""
-        INSERT INTO profiles
-        (email, id_user)
-        VALUES (%s, %s)
-    """, (
-        email,
-        user_id
-    ))
+        if "profiles.email" in str(e):
+            return False, "Email уже существует"
 
-    conn.commit()
+        return False, "Нарушено ограничение уникальности"
 
-    cur.close()
-    conn.close()
+    except pymysql.Error as e:
+        conn.rollback()
+        return False, f"Ошибка базы данных: {str(e)}"
 
-    return True, "OK"
+    finally:
+        cur.close()
+        conn.close()
+
 
 def login_user(username, password):
 
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT *
-        FROM user
-        WHERE username=%s
-    """, (username,))
+    try:
 
-    user = cur.fetchone()
+        cur.callproc(
+            'check_password',
+            (
+                username,
+                password
+            )
+        )
 
-    cur.close()
-    conn.close()
+        result = cur.fetchall()
 
-    if not user:
+        if result and result[0]['id_user'] is not None:
+            return True
+
         return False
 
-    return bcrypt.checkpw(
-        password.encode(),
-        user["password"].encode()
-    )
+    except pymysql.Error:
+        return False
+
+    finally:
+        cur.close()
+        conn.close()
