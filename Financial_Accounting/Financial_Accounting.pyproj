@@ -18,7 +18,7 @@
     <SuppressCollectPythonCloudServiceFiles>true</SuppressCollectPythonCloudServiceFiles>
     <Name>Financial_Accounting</Name>
     <RootNamespace>Financial_Accounting</RootNamespace>
-    <InterpreterId>MSBuild|env1|$(MSBuildProjectFullPath)</InterpreterId>
+    <InterpreterId>MSBuild|env2|$(MSBuildProjectFullPath)</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -37,9 +37,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="files_module\goals.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="files_module\security.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="validations\auth_validation.py">
@@ -102,12 +99,24 @@
     <Content Include="views\personal_account.tpl" />
     <Content Include="views\login.tpl" />
     <Content Include="views\layout.tpl" />
+    <Content Include="views\registration.tpl">
+      <SubType>Code</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Interpreter Include="env1\">
       <Id>env1</Id>
       <Version>3.13</Version>
       <Description>env1 (Python 3.13 (64-bit))</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+      <Architecture>X64</Architecture>
+    </Interpreter>
+    <Interpreter Include="env2\">
+      <Id>env2</Id>
+      <Version>3.13</Version>
+      <Description>env2 (Python 3.13 (64-bit))</Description>
       <InterpreterPath>Scripts\python.exe</InterpreterPath>
       <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
       <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
