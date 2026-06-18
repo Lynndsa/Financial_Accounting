@@ -4,6 +4,7 @@ from urllib.parse import unquote
 
 from files_module.auth import register_user
 from files_module.auth import login_user
+from files_module import goals
 
 from validations.auth_validation import validate_registration
 
