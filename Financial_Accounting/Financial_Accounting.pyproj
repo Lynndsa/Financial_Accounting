@@ -39,9 +39,6 @@
     <Compile Include="files_module\goals.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="files_module\security.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="validations\auth_validation.py">
       <SubType>Code</SubType>
     </Compile>

@@ -38,7 +38,11 @@ def login():
             path='/'
         )
 
-        redirect('/main')
+        return template(
+            'personal_account.tpl',
+            title='Личный кабинет',
+            year=datetime.now().year
+        )
 
     return template(
         'login.tpl',
@@ -81,6 +85,10 @@ def register():
         )
 
     ok, msg = register_user(
+        None,
+        None,
+        None,
+        None,
         username,
         email,
         password
@@ -104,19 +112,6 @@ def register():
             username='',
             error=''
         )
-
-@route('/main')
-def main():
-    username = unquote(request.get_cookie('username') or '')
-
-    if not username:
-        return redirect('/')
-
-    return template(
-        'main.tpl',
-        title='Главная',
-        username=username
-    )
 
 
 @route('/income')
@@ -148,9 +143,15 @@ def goals():
 
 
 @route('/personal_account')
-@view('personal_account')
 def personal_account():
-    return dict(
+
+    username = unquote(request.get_cookie('username') or '')
+
+    if not username:
+        return redirect('/')
+
+    return template(
+        'personal_account.tpl',
         title='Личный кабинет',
         year=datetime.now().year
     )

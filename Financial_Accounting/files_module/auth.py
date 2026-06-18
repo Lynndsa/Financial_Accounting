@@ -1,56 +1,42 @@
-import pymysql
+import pymysql, hashlib
 from database.db import get_connection
-from files_module.security import hash_password, verify_password
 
 
-def register_user(username, email, password):
+def register_user(name, lastname, surname, datebirth, username, email, password):
 
     conn = get_connection()
     cur = conn.cursor()
 
     try:
 
-        cur.execute(
-            "SELECT id_user FROM user WHERE username=%s",
-            (username,)
+        cur.callproc(
+            'create_new_user',
+            (
+                name,
+                lastname,
+                surname,
+                datebirth,
+                username,
+                email,
+                password
+            )
         )
-
-        if cur.fetchone():
-            return False, "Логин уже существует"
-
-        cur.execute(
-            "SELECT email FROM profiles WHERE email=%s",
-            (email,)
-        )
-
-        if cur.fetchone():
-            return False, "Email уже существует"
-
-        password_hash = hash_password(password)
-
-        cur.execute("""
-            INSERT INTO user
-            (username, password)
-            VALUES (%s, %s)
-        """, (
-            username,
-            password_hash
-        ))
-
-        user_id = cur.lastrowid
-
-        cur.execute("""
-            INSERT INTO profiles
-            (email, id_user)
-            VALUES (%s, %s)
-        """, (
-            email,
-            user_id
-        ))
 
         conn.commit()
 
-        return True, "OK"
+        return True, 'OK'
+
+    except pymysql.err.IntegrityError as e:
+
+        conn.rollback()
+
+        if "user.username" in str(e):
+            return False, "Логин уже существует"
+
+        if "profiles.email" in str(e):
+            return False, "Email уже существует"
+
+        return False, "Нарушено ограничение уникальности"
 
     except pymysql.Error as e:
         conn.rollback()
@@ -68,21 +54,23 @@ def login_user(username, password):
 
     try:
 
-        cur.execute("""
-            SELECT *
-            FROM user
-            WHERE username=%s
-        """, (username,))
-
-        user = cur.fetchone()
-
-        if not user:
-            return False
-
-        return verify_password(
-            password,
-            user["password"]
+        cur.callproc(
+            'check_password',
+            (
+                username,
+                password
+            )
         )
+
+        result = cur.fetchall()
+
+        if result and result[0]['id_user'] is not None:
+            return True
+
+        return False
+
+    except pymysql.Error:
+        return False
 
     finally:
         cur.close()
