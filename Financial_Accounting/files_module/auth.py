@@ -51,6 +51,10 @@ def register_user(username, email, password):
 
         return True, "OK"
 
+    except pymysql.Error as e:
+        conn.rollback()
+        return False, f"Ошибка базы данных: {str(e)}"
+
     finally:
         cur.close()
         conn.close()

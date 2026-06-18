@@ -16,13 +16,18 @@ def home():
 @route('/login_page')
 def login_page():
     mode = request.query.mode or 'login'
+    success = request.query.success
+
+    success_message = ''
+
+    if success == '1':
+        success_message = 'Регистрация успешно завершена'
 
     return template(
         'login.tpl', 
         error='', 
-        errors={}, 
-        username='', 
-        mode=mode
+        success=success_message, 
+        username='',
     )
 
 @route('/login', method='POST')
@@ -35,7 +40,11 @@ def login():
 
         response.set_cookie(
             'username',
-            username
+            username,
+            secure=False,
+            httponly=True,
+            max_age=3600,
+            path='/'
         )
 
         redirect('/main')
@@ -43,19 +52,19 @@ def login():
     return template(
         'login.tpl',
         error='Неверный логин или пароль',
-        errors={},
-        username=username,
-        password='',
-        mode='login'
+        success='',
+        username=username
     )
 
 @route('/register_page')
 def register_page():
     return template(
-    'register.tpl',
-    error='',
-    errors={},
-    mode=None
+        'registration.tpl',
+        errors={},
+        username='',
+        email='',
+        password='',
+        password2=''
     )
 
 @route('/register', method='POST')
@@ -65,24 +74,18 @@ def register():
     password = request.forms.getunicode('password')
     password2 = request.forms.getunicode('password2')
 
-    errors = validate_registration(
-        username,
-        email,
-        password,
-        password2
-    )
+    errors = validate_registration(username, email, password, password2)
 
     if errors:
 
         return template(
-            'login.tpl',
-            error='',
+            'registration.tpl',
+            success='',
             errors=errors,
             username=username,
             email=email,
             password=password,
-            password2=password2,
-            mode='register'
+            password2=password2
         )
 
     ok, msg = register_user(
@@ -94,17 +97,17 @@ def register():
     if not ok:
 
         return template(
-            'login.tpl',
+            'registration.tpl',
             error=msg,
+            success='',
             errors={},
             username=username,
             email=email,
             password=password,
-            password2=password2,
-            mode='register'
+            password2=password2
         )
 
-    redirect('/login_page')
+    redirect('/login_page?success=1')
 
 @route('/main')
 def main():
@@ -114,7 +117,7 @@ def main():
         redirect('/')
 
     return template(
-        'main',
+        'main.tpl',
         title='Главная',
         username=username
     )
