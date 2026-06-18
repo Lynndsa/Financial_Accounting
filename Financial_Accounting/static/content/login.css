@@ -1,3 +1,212 @@
-body
-{
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #BA5555; /* Розовато-красный базовый фон */
+    color: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Карточка прижата к левой стороне */
+    padding: 2rem 10%; /* Отступ слева как на макете */
+    overflow-x: hidden;
+    position: relative;
+}
+
+    /* СЛОЙ 1 (НИЖНИЙ): Темная фигура, которая работает как ТЕНЬ */
+    body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 310px;
+        background-color: #4c0505;
+        clip-path: polygon(0 0, 100% 0, 100% 310px, 55% 150px, 45% 210px, 0 110px);
+        z-index: -2;
+    }
+
+    /* СЛОЙ 2 (ВЕРХНИЙ): Фигура посветлее */
+    body::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 280px;
+        background-color: #B40000;
+        clip-path: polygon(0 0, 100% 0, 100% 280px, 55% 120px, 45% 180px, 0 80px);
+        z-index: -1;
+    }
+
+/* Темно-бордовая карточка авторизации */
+.auth-card {
+    background-color: #5c0707; /* Глубокий темно-красный цвет карточки */
+    border-radius: 40px; /* Сильное скругление углов */
+    padding: 3.5rem 3rem;
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+    .auth-card h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+        text-align: center;
+    }
+
+    .auth-card h3 {
+        font-size: 1.1rem;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 2.5rem;
+        text-align: center;
+    }
+
+/* Группа полей: Подпись слева, инпут справа */
+.input-group {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+    .input-group label {
+        font-size: 1.35rem;
+        font-weight: 600;
+        width: 90px; /* Фиксированная ширина подписи для выравнивания */
+        text-align: left;
+        flex-shrink: 0;
+    }
+
+    .input-group input {
+        flex-grow: 1;
+        height: 54px;
+        border-radius: 20px; /* Закругленные края у белых полей */
+        border: none;
+        padding: 0 1.2rem;
+        font-size: 1.1rem;
+        font-family: 'Inter', sans-serif;
+        color: #333333;
+        background-color: #ffffff;
+        outline: none;
+        transition: box-shadow 0.2s ease;
+    }
+
+        .input-group input:focus {
+            box-shadow: 0 0 0 4px rgba(180, 0, 0, 0.4);
+        }
+
+/* Форма растягивается на всю карточку */
+form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Кнопка Войти */
+.btn-submit {
+    background-color: #b15d5d; /* Светло-коричневый/розовый оттенок с макета */
+    color: #ffffff;
+    border: none;
+    padding: 1rem 3.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border-radius: 16px;
+    cursor: pointer;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.2s ease;
+    width: auto;
+    min-width: 180px;
+}
+
+    .btn-submit:hover {
+        background-color: #a04c4c;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    }
+
+/* Текстовая кнопка "Нет аккаунта?" */
+.btn-link {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.1rem;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: 'Inter', sans-serif;
+    transition: color 0.2s ease;
+}
+
+    .btn-link:hover {
+        color: #ffffff;
+    }
+
+/* Стили для системных уведомлений (ошибки/успех) */
+.alert {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.alert-error {
+    background-color: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgb(239, 68, 68);
+    color: #fca5a5;
+}
+
+.alert-success {
+    background-color: rgba(34, 197, 94, 0.2);
+    border: 1px solid rgb(34, 197, 94);
+    color: #86efac;
+}
+
+/* Адаптивность для мобильных телефонов */
+@media (max-width: 600px) {
+    body {
+        padding: 1.5rem;
+        justify-content: center; /* Центрируем форму на мобильных экранах */
+    }
+
+        body::before {
+            height: 160px;
+            clip-path: polygon(0 0, 100% 0, 100% 120px, 50% 90px, 0 130px);
+        }
+
+        body::after {
+            height: 140px;
+            clip-path: polygon(0 0, 100% 0, 100% 100px, 50% 70px, 0 110px);
+        }
+
+    .auth-card {
+        padding: 2.5rem 1.5rem;
+    }
+
+    .input-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.4rem;
+    }
+
+        .input-group label {
+            width: 100%;
+        }
+
+    .btn-submit {
+        width: 100%;
+    }
 }

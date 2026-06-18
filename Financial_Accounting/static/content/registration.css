@@ -1,2 +1,228 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
+    font-family: 'Inter', sans-serif;
+    background-color: #BA5555; /* Базовый розовато-красный фон */
+    color: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Карточка прижата к левой стороне */
+    padding: 4rem 10% 2rem 10%; /* Оставили свободное место под кнопку Назад */
+    overflow-x: hidden;
+    position: relative;
+}
+
+    /* СЛОЙ 1 (НИЖНИЙ): Темная фигура, которая работает как ТЕНЬ */
+    body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 310px;
+        background-color: #4c0505;
+        clip-path: polygon(0 0, 100% 0, 100% 310px, 55% 150px, 45% 210px, 0 110px);
+        z-index: -2;
+    }
+
+    /* СЛОЙ 2 (ВЕРХНИЙ): Фигура посветлее */
+    body::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 280px;
+        background-color: #B40000;
+        clip-path: polygon(0 0, 100% 0, 100% 280px, 55% 120px, 45% 180px, 0 80px);
+        z-index: -1;
+    }
+
+/* Кнопка Назад */
+.btn-back {
+    position: absolute;
+    top: 1.5rem;
+    left: 5%;
+    background-color: #5c0707;
+    color: #ffffff;
+    border: none;
+    padding: 0.6rem 1.8rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+    .btn-back:hover {
+        background-color: #450a0a;
+        transform: translateX(-3px);
+    }
+
+/* Темно-бордовая карточка регистрации */
+.auth-card {
+    background-color: #5c0707;
+    border-radius: 40px;
+    padding: 3.5rem 3rem;
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    margin-top: 1.5rem; /* Отступ сверху, чтобы не перекрыть кнопку назад */
+}
+
+    .auth-card h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+        text-align: center;
+    }
+
+    .auth-card h3 {
+        font-size: 1.1rem;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 2.5rem;
+        text-align: center;
+    }
+
+/* Форма во всю ширину */
+form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Группа полей */
+.input-group {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 1.8rem;
+    gap: 1rem;
+}
+
+    .input-group label {
+        font-size: 1.35rem;
+        font-weight: 600;
+        width: 90px; /* Фиксированная ширина подписи для выравнивания */
+        text-align: left;
+        flex-shrink: 0;
+    }
+
+    .input-group input {
+        flex-grow: 1;
+        height: 54px;
+        border-radius: 20px;
+        border: none;
+        padding: 0 1.2rem;
+        font-size: 1.1rem;
+        font-family: 'Inter', sans-serif;
+        color: #333333;
+        background-color: #ffffff;
+        outline: none;
+        transition: box-shadow 0.2s ease;
+    }
+
+        .input-group input:focus {
+            box-shadow: 0 0 0 4px rgba(180, 0, 0, 0.4);
+        }
+
+/* Кнопка регистрации */
+.btn-submit {
+    background-color: #b15d5d; /* Светлый розово-коричневый оттенок */
+    color: #ffffff;
+    border: none;
+    padding: 1.1rem 3.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    border-radius: 16px;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: all 0.2s ease;
+    width: auto;
+    min-width: 200px;
+}
+
+    .btn-submit:hover {
+        background-color: #a04c4c;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    }
+
+/* Оформление блока с ошибками */
+.alert {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    text-align: left;
+}
+
+.alert-error {
+    background-color: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgb(239, 68, 68);
+    color: #fca5a5;
+}
+
+    .alert-error p {
+        margin-bottom: 0.2rem;
+    }
+
+        .alert-error p:last-child {
+            margin-bottom: 0;
+        }
+
+/* Мобильная адаптивность */
+@media (max-width: 600px) {
+    body {
+        padding: 5rem 1.5rem 1.5rem 1.5rem;
+        justify-content: center;
+    }
+
+    .btn-back {
+        top: 1rem;
+        left: 1.5rem;
+        width: calc(100% - 3rem);
+        text-align: center;
+    }
+
+    body::before {
+        height: 160px;
+        clip-path: polygon(0 0, 100% 0, 100% 120px, 50% 90px, 0 130px);
+    }
+
+    body::after {
+        height: 140px;
+        clip-path: polygon(0 0, 100% 0, 100% 100px, 50% 70px, 0 110px);
+    }
+
+    .auth-card {
+        padding: 2.5rem 1.5rem;
+        margin-top: 0;
+    }
+
+    .input-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.4rem;
+    }
+
+        .input-group label {
+            width: 100%;
+        }
+
+    .btn-submit {
+        width: 100%;
+    }
 }
