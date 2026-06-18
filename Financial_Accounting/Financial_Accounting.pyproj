@@ -121,6 +121,7 @@
       <Id>env3</Id>
       <Version>3.12</Version>
       <Description>env3 (Python 3.12 (64-bit))</Description>
+    </Interpreter>
     <Interpreter Include="env2\">
       <Id>env2</Id>
       <Version>3.13</Version>
