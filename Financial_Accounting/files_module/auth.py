@@ -1,3 +1,4 @@
+import pymysql
 from database.db import get_connection
 from files_module.security import hash_password, verify_password
 

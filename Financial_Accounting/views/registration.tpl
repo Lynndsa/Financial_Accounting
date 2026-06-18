@@ -4,7 +4,7 @@
 </head>
 <body>
 
-     <button onclick="showLogin()">
+     <button onclick="window.location='/login_page'">
         Назад
     </button>
 

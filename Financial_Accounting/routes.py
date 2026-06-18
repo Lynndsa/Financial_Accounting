@@ -9,24 +9,15 @@ from validations.auth_validation import validate_registration
 
 @route('/')
 def home():
-    return template(
-        'hello_page.tpl'
-    )
+    return template('hello_page.tpl')
 
 @route('/login_page')
 def login_page():
-    mode = request.query.mode or 'login'
-    success = request.query.success
-
-    success_message = ''
-
-    if success == '1':
-        success_message = 'Регистрация успешно завершена'
 
     return template(
         'login.tpl', 
         error='', 
-        success=success_message, 
+        success='', 
         username='',
     )
 
@@ -60,6 +51,7 @@ def login():
 def register_page():
     return template(
         'registration.tpl',
+        error='',
         errors={},
         username='',
         email='',
@@ -80,7 +72,7 @@ def register():
 
         return template(
             'registration.tpl',
-            success='',
+            error='',
             errors=errors,
             username=username,
             email=email,
@@ -99,7 +91,6 @@ def register():
         return template(
             'registration.tpl',
             error=msg,
-            success='',
             errors={},
             username=username,
             email=email,
@@ -107,14 +98,19 @@ def register():
             password2=password2
         )
 
-    redirect('/login_page?success=1')
+    return template(
+            'login.tpl',
+            success='Регистрация успешно завершена',
+            username='',
+            error=''
+        )
 
 @route('/main')
 def main():
     username = unquote(request.get_cookie('username') or '')
 
     if not username:
-        redirect('/')
+        return redirect('/')
 
     return template(
         'main.tpl',

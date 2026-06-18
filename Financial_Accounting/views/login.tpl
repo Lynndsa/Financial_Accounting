@@ -29,7 +29,7 @@
 
     <br>
 
-    <button onclick="showRegister()">
+    <button onclick="window.location='/register_page'">
         Регистрация
     </button>
 

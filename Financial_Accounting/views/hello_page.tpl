@@ -6,18 +6,17 @@
 	финансовыми целями, а также для анализа финансового состояния пользователей</h3>
 
 <form action="/login_page" method="get"> 
-	<input type="hidden" name="mode" value="login"> 
 	
-	<button type="submit"> 
+	<button> 
 		Войти 
-	</button> </form> 
+	</button> 
+</form> 
 	
 <br> 
 	
-<form action="/login_page" method="get"> 
-	<input type="hidden" name="mode" value="register"> 
+<form action="/register_page" method="get"> 
 	
-	<button type="submit"> 
+	<button> 
 		Создать профиль 
 	</button> 
 </form>
