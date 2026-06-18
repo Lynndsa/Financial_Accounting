@@ -19,7 +19,7 @@
         </ul>
 
         <div class="logout">
-            <a class="btn btn-danger">🚪</a>
+            <a href="/logout" class="btn btn-danger">🚪</a>
         </div>
     </div>
 

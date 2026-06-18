@@ -12,6 +12,11 @@ from validations.auth_validation import validate_registration
 def home():
     return template('hello_page.tpl')
 
+@route('/logout')
+def logout():
+    response.delete_cookie('username', path='/')
+    return template('hello_page.tpl')
+
 @route('/login_page')
 def login_page():
 
