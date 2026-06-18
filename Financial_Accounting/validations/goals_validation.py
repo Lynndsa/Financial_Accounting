@@ -1,7 +1,7 @@
 """
-goals_validators.py
+validations/goals_validation.py
 Валидация данных для модуля "Копилка" (таблица goals).
-Используется в goals_api.py перед обращением к БД.
+Используется в files_module/goals.py перед обращением к БД.
 """
 
 from datetime import datetime, date
