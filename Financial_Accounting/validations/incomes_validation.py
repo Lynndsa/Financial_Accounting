@@ -68,7 +68,7 @@ def validate_create_income(data):
     err = validate_income_sum(income_sum)
     if err: errors['sum'] = err
 
-    # Валидация даты (если не передана, проставим текущую в роуте)
+    # Валидация даты (если не передана, берем текущую дату)
     cleaned_date = None
     if date_time and str(date_time).strip():
         try:
