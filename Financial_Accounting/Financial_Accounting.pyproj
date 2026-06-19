@@ -19,7 +19,7 @@
     <Name>Financial_Accounting</Name>
     <RootNamespace>Financial_Accounting</RootNamespace>
     <InterpreterId>MSBuild|env3|$(MSBuildProjectFullPath)</InterpreterId>
-    <InterpreterId>MSBuild|env4|$(MSBuildProjectFullPath)</InterpreterId>
+    <InterpreterId>MSBuild|env1|$(MSBuildProjectFullPath)</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -40,6 +40,9 @@
     <Compile Include="files_module\goals.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="files_module\income.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="validations\auth_validation.py">
       <SubType>Code</SubType>
     </Compile>
@@ -48,6 +51,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="validations\goals_validation.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="validations\incomes_validation.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

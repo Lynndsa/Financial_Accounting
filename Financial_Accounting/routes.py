@@ -4,7 +4,8 @@ from urllib.parse import unquote
 
 from files_module.auth import register_user
 from files_module.auth import login_user
-from files_module import goals
+from files_module import goals, income
+from database.db import get_connection
 
 from validations.auth_validation import validate_registration
 
@@ -19,7 +20,6 @@ def logout():
 
 @route('/login_page')
 def login_page():
-
     return template(
         'login.tpl', 
         error='', 
@@ -29,12 +29,10 @@ def login_page():
 
 @route('/login', method='POST')
 def login():
-
     username = request.forms.getunicode('username')
     password = request.forms.getunicode('password')
 
     if login_user(username, password):
-
         response.set_cookie(
             'username',
             username,
@@ -43,7 +41,6 @@ def login():
             max_age=3600,
             path='/'
         )
-
         return template(
             'personal_account.tpl',
             title='Личный кабинет',
@@ -77,9 +74,7 @@ def register():
     password2 = request.forms.getunicode('password2')
 
     errors = validate_registration(username, email, password, password2)
-
     if errors:
-
         return template(
             'registration.tpl',
             error='',
@@ -101,7 +96,6 @@ def register():
     )
 
     if not ok:
-
         return template(
             'registration.tpl',
             error=msg,
@@ -113,46 +107,107 @@ def register():
         )
 
     return template(
-            'login.tpl',
-            success='Регистрация успешно завершена',
-            username='',
-            error=''
-        )
+        'login.tpl',
+        success='Регистрация успешно завершена',
+        username='',
+        error=''
+    )
 
 
 @route('/income')
-@view('income')
-def income():
-    return dict(
+def income_page():
+    # 1. Получаем имя пользователя из куки авторизации
+    username = unquote(request.get_cookie('username') or '')
+    if not username:
+        return redirect('/login_page')
+
+    user_id = None
+    card_id = None
+
+    # 2. Идём в БД, чтобы узнать id_user и его id_card
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Находим ID пользователя по его логину
+            cursor.execute('SELECT id_user FROM user WHERE username = %s', (username,))
+            user_row = cursor.fetchone()
+            if user_row:
+                user_id = user_row['id_user']
+                
+                # Ищем любой доступный счёт (карту) этого пользователя в таблице accounts
+                cursor.execute('SELECT id_card FROM accounts WHERE id_user = %s LIMIT 1', (user_id,))
+                card_row = cursor.fetchone()
+                if card_row:
+                    card_id = card_row['id_card']
+    except Exception as e:
+        print(f"Ошибка при получении данных сессии: {e}")
+    finally:
+        conn.close()
+
+    # Если у нового пользователя ещё нет счетов, подставим заглушку, чтобы не падало
+    if not card_id:
+        card_id = 0 
+
+    # 3. Передаем всё это напрямую в шаблон tpl
+    return template(
+        'income.tpl',
         title='Доходы',
-        year=datetime.now().year
+        year=datetime.now().year,
+        user_id=user_id,
+        card_id=card_id
     )
 
 
 @route('/expenses')
-@view('expenses')
-def expenses():
-    return dict(
-        title='Расходы',
-        year=datetime.now().year
-    )
+def expenses_page():
+    return template('expenses.tpl', title='Расходы', year=datetime.now().year)
 
 
 @route('/goals')
-@view('goals')
-def goals():
-    return dict(
-        title='Копилка',
-        year=datetime.now().year
-    )
+def goals_page():
+    # 1. Проверяем авторизацию через куки
+    username = unquote(request.get_cookie('username') or '')
+    if not username:
+        return redirect('/login_page')
 
+    user_id = None
+    card_id = None
+
+    # 2. Получаем реальные ID пользователя и его счета
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute('SELECT id_user FROM user WHERE username = %s', (username,))
+            user_row = cursor.fetchone()
+            if user_row:
+                user_id = user_row['id_user']
+                
+                # Ищем активный счёт
+                cursor.execute('SELECT id_card FROM accounts WHERE id_user = %s LIMIT 1', (user_id,))
+                card_row = cursor.fetchone()
+                if card_row:
+                    card_id = card_row['id_card']
+    except Exception as e:
+        print(f"Ошибка при получении данных сессии для целей: {e}")
+    finally:
+        conn.close()
+
+    if not card_id:
+        card_id = 0 
+
+    # 3. Передаем переменные в шаблон tpl
+    return template(
+        'goals.tpl',  # убедись, что файл в паблике называется goals.tpl
+        title='Копилка',
+        year=datetime.now().year,
+        user_id=user_id,
+        card_id=card_id
+    )
 
 
 @route('/personal_account')
 def personal_account():
-
     username = unquote(request.get_cookie('username') or '')
-
     if not username:
         return redirect('/')
 
