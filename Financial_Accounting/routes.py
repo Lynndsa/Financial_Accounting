@@ -165,7 +165,44 @@ def expenses_page():
 
 @route('/goals')
 def goals_page():
-    return template('goals.tpl', title='Копилка', year=datetime.now().year)
+    # 1. Проверяем авторизацию через куки
+    username = unquote(request.get_cookie('username') or '')
+    if not username:
+        return redirect('/login_page')
+
+    user_id = None
+    card_id = None
+
+    # 2. Получаем реальные ID пользователя и его счета
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute('SELECT id_user FROM user WHERE username = %s', (username,))
+            user_row = cursor.fetchone()
+            if user_row:
+                user_id = user_row['id_user']
+                
+                # Ищем активный счёт
+                cursor.execute('SELECT id_card FROM accounts WHERE id_user = %s LIMIT 1', (user_id,))
+                card_row = cursor.fetchone()
+                if card_row:
+                    card_id = card_row['id_card']
+    except Exception as e:
+        print(f"Ошибка при получении данных сессии для целей: {e}")
+    finally:
+        conn.close()
+
+    if not card_id:
+        card_id = 0 
+
+    # 3. Передаем переменные в шаблон tpl
+    return template(
+        'goals.tpl',  # убедись, что файл в паблике называется goals.tpl
+        title='Копилка',
+        year=datetime.now().year,
+        user_id=user_id,
+        card_id=card_id
+    )
 
 
 @route('/personal_account')

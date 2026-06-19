@@ -1,5 +1,4 @@
 % rebase('layout', title=title, year=year)
-<!-- если ваш layout-файл называется иначе (например _Layout) - поправьте имя выше -->
 
 <h2>{{title}}</h2>
 
@@ -56,6 +55,10 @@
 
 <script>
 (function () {
+    // Получаем ID авторизованного юзера и его счета из Bottle шаблонизатора
+    var CURRENT_USER_ID = {{user_id}};
+    var CURRENT_CARD_ID = {{card_id}};
+
     var apiBase = '/api/goals';
 
     var tableBody = document.getElementById('goals-table-body');
@@ -64,7 +67,7 @@
     var nameField = document.getElementById('goal-name');
     var targetField = document.getElementById('goal-target');
     var currentField = document.getElementById('goal-current');
-    var currentGroup = document.getElementById('current-amount-group'); // Обертка поля "Накоплено"
+    var currentGroup = document.getElementById('current-amount-group');
     var deadlineField = document.getElementById('goal-deadline');
     var descriptionField = document.getElementById('goal-description');
     var submitBtn = document.getElementById('goal-submit-btn');
@@ -99,15 +102,16 @@
     function resetForm() {
         form.reset();
         idField.value = '';
-        currentGroup.style.display = 'inline-block'; // Показываем поле обратно при сбросе
+        currentGroup.style.display = 'inline-block';
         currentField.disabled = false;
-        descriptionField.disabled = false; // ТЕПЕРЬ НЕ БЛОКИРУЕМ
+        descriptionField.disabled = false;
         submitBtn.textContent = 'Создать цель';
         cancelBtn.style.display = 'none';
     }
 
     function loadGoals() {
-        apiRequest(apiBase)
+        // Добавляем параметр user_id в GET запрос
+        apiRequest(apiBase + '?user_id=' + CURRENT_USER_ID)
             .then(function (data) {
                 if (data.error) {
                     tableBody.innerHTML = '<tr><td colspan="7">' + data.error + '</td></tr>';
@@ -178,13 +182,10 @@
         nameField.value = goal.name;
         targetField.value = goal.target_amount;
         
-        // ТЕПЕРЬ ТУТ: Полностью скрываем поле "Уже накоплено" при изменении цели
         currentField.value = goal.current_amount;
         currentGroup.style.display = 'none'; 
         
         deadlineField.value = goal.deadline || '';
-        
-        // ТЕПЕРЬ ТУТ: Описание доступно для редактирования
         descriptionField.value = goal.description || '';
         descriptionField.disabled = false; 
         
@@ -195,7 +196,8 @@
 
     function deleteGoal(id) {
         if (!confirm('Удалить эту цель?')) return;
-        apiRequest(apiBase + '/' + id, { method: 'DELETE' })
+        // Передаем user_id параметром строки в DELETE
+        apiRequest(apiBase + '/' + id + '?user_id=' + CURRENT_USER_ID, { method: 'DELETE' })
             .then(function (data) {
                 if (data.error) {
                     showMessage(data.error, true);
@@ -216,7 +218,7 @@
         apiRequest(apiBase + '/' + id + '/topup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount: amount })
+            body: JSON.stringify({ amount: amount, user_id: CURRENT_USER_ID }) // Добавили user_id
         })
             .then(function (data) {
                 if (data.error) {
@@ -237,6 +239,11 @@
     form.addEventListener('submit', function (e) {
         e.preventDefault();
 
+        if (CURRENT_CARD_ID === 0) {
+            alert('У вас нет активных счетов! Сначала добавьте карту или счет.');
+            return;
+        }
+
         var id = idField.value;
 
         if (id) {
@@ -245,10 +252,11 @@
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    user_id: CURRENT_USER_ID, // Передаем владельца
                     name: nameField.value,
                     target_amount: targetField.value,
                     deadline: deadlineField.value || null,
-                    description: descriptionField.value || null // ТЕПЕРЬ ТУТ: отправляем описание
+                    description: descriptionField.value || null
                 })
             })
                 .then(function (data) {
@@ -270,6 +278,8 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    user_id: CURRENT_USER_ID, // Реальный юзер
+                    id_card: CURRENT_CARD_ID, // Реальный счет
                     name: nameField.value,
                     target_amount: targetField.value,
                     current_amount: currentField.value || 0,
