@@ -107,8 +107,9 @@
                     <span id="sumError" style="color: red; display: none;"></span>
                 </div>
                 <div class="form-group">
-                    <label>Дата:</label>
+                    <label>Дата операции:</label>
                     <input type="date" id="incomeDate" class="form-control">
+                    <small style="color: #7f8c8d; display: block; margin-top: 4px;">По умолчанию будет выбран сегодняшний день</small>
                 </div>
                 <button type="submit">Сохранить операцию</button>
             </form>
@@ -165,6 +166,10 @@
 </div>
 
 <script>
+    // Подхватываем авторизованные ID пользователя и его счета из Bottle
+    const CURRENT_USER_ID = {{user_id}};
+    const CURRENT_CARD_ID = {{card_id}};
+
     const currentMonthStr = new Date().toISOString().slice(0, 7);
     document.getElementById('filterMonth').value = currentMonthStr;
     
@@ -215,7 +220,7 @@
     async function loadChartData() {
         const month = document.getElementById('filterMonth').value;
         try {
-            const res = await fetch(`/api/incomes/chart?month=${month}`);
+            const res = await fetch(`/api/incomes/chart?month=${month}&user_id=${CURRENT_USER_ID}`);
             const data = await res.json();
             const canvas = document.getElementById('incomeDonutChart');
             const msg = document.getElementById('noDataMessage');
@@ -250,7 +255,7 @@
         const month = document.getElementById('filterMonth').value;
         const category = document.getElementById('filterCategory').value;
         try {
-            const res = await fetch(`/api/incomes/history?month=${month}&id_category=${category}`);
+            const res = await fetch(`/api/incomes/history?month=${month}&id_category=${category}&user_id=${CURRENT_USER_ID}`);
             const data = await res.json();
             const tbody = document.querySelector('#historyTable tbody');
             tbody.innerHTML = '';
@@ -274,13 +279,18 @@
         } catch (err) { console.error(err); }
     }
 
-    // Сохранение дохода
     document.getElementById('addIncomeForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
+        if (CURRENT_CARD_ID === 0) {
+            alert('У вас нет зарегистрированных счетов! Сначала добавьте карту или счет.');
+            return;
+        }
+
         const payload = {
             id_category: parseInt(document.getElementById('incomeCategory').value),
-            id_card: 2, // Явно передаем дефолтный ID счета, чтобы удовлетворить бэкенд-валидатор
+            id_card: CURRENT_CARD_ID, 
+            user_id: CURRENT_USER_ID, 
             sum: parseFloat(document.getElementById('incomeSum').value),
             date_time: document.getElementById('incomeDate').value || null
         };
@@ -302,7 +312,6 @@
         }
     });
 
-    // Создание категории
     document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const res = await fetch('/api/income-categories', {

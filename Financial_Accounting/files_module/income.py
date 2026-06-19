@@ -9,12 +9,7 @@ from validations.incomes_validation import (
     validate_create_income
 )
 
-DEFAULT_USER_ID = 1
-DEFAULT_CARD_ID = 2
-
-
 def _serialize_row(row):
-    """Приводит типы данных строки БД к JSON-совместимому формату."""
     result = dict(row)
     for key, value in result.items():
         if isinstance(value, Decimal):
@@ -29,10 +24,6 @@ def _get_request_data():
         return request.json
     return dict(request.forms)
 
-
-# ==============================================================================
-# 1. РАБОТА С КАТЕГОРИЯМИ ДОХОДОВ
-# ==============================================================================
 
 @route('/api/income-categories', method='GET')
 def get_income_categories():
@@ -60,7 +51,6 @@ def create_income_category():
         return {'error': err}
 
     name_clean = str(name).strip()
-
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -81,16 +71,10 @@ def create_income_category():
         conn.close()
 
 
-# ==============================================================================
-# 2. ОПЕРАЦИИ С ДОХОДАМИ
-# ==============================================================================
-
 @route('/api/incomes', method='POST')
 def add_income():
     data = _get_request_data()
-    
-    if 'id_card' not in data or not data['id_card']:
-        data['id_card'] = DEFAULT_CARD_ID
+    user_id = data.get('user_id')
 
     errors, cleaned = validate_create_income(data)
     if errors:
@@ -102,7 +86,7 @@ def add_income():
         with conn.cursor() as cursor:
             cursor.execute(
                 'SELECT id_card FROM accounts WHERE id_card = %s AND id_user = %s',
-                (cleaned['id_card'], DEFAULT_USER_ID)
+                (cleaned['id_card'], user_id)
             )
             if not cursor.fetchone():
                 response.status = 400
@@ -119,7 +103,6 @@ def add_income():
                 'UPDATE accounts SET balance = balance + %s WHERE id_card = %s',
                 (cleaned['sum'], cleaned['id_card'])
             )
-
         conn.commit()
         response.status = 201
         return {'message': 'Доход успешно зафиксирован'}
@@ -133,6 +116,7 @@ def add_income():
 
 @route('/api/incomes/history', method='GET')
 def get_incomes_history():
+    user_id = request.query.get('user_id')
     selected_month = request.query.get('month') or date.today().strftime('%Y-%m')
     id_category = request.query.get('id_category') or 'all'
 
@@ -144,7 +128,7 @@ def get_incomes_history():
         WHERE a.id_user = %s 
           AND DATE_FORMAT(i.date_time, '%%Y-%%m') = %s
     """
-    params = [DEFAULT_USER_ID, selected_month]
+    params = [user_id, selected_month]
 
     if id_category != 'all':
         query += " AND i.id_category = %s"
@@ -167,6 +151,7 @@ def get_incomes_history():
 
 @route('/api/incomes/chart', method='GET')
 def get_incomes_chart_data():
+    user_id = request.query.get('user_id')
     selected_month = request.query.get('month') or date.today().strftime('%Y-%m')
 
     query = """
@@ -183,7 +168,7 @@ def get_incomes_chart_data():
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute(query, [DEFAULT_USER_ID, selected_month])
+            cursor.execute(query, [user_id, selected_month])
             rows = cursor.fetchall()
         
         chart_data = [{'category': r['category_name'], 'sum': float(r['total_sum'])} for r in rows]
