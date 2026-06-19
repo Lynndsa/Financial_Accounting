@@ -18,7 +18,7 @@
         <input type="number" id="goal-target" class="form-control" placeholder="50000" min="0.01" step="0.01" required />
     </div>
 
-    <div class="form-group">
+    <div class="form-group" id="current-amount-group">
         <label for="goal-current">Уже накоплено, ₽</label>
         <input type="number" id="goal-current" class="form-control" placeholder="0" min="0" step="0.01" />
     </div>
@@ -64,6 +64,7 @@
     var nameField = document.getElementById('goal-name');
     var targetField = document.getElementById('goal-target');
     var currentField = document.getElementById('goal-current');
+    var currentGroup = document.getElementById('current-amount-group'); // Обертка поля "Накоплено"
     var deadlineField = document.getElementById('goal-deadline');
     var descriptionField = document.getElementById('goal-description');
     var submitBtn = document.getElementById('goal-submit-btn');
@@ -77,9 +78,6 @@
         setTimeout(function () { messageBox.style.display = 'none'; }, 4000);
     }
 
-    // Общая обёртка над fetch: достаёт текст ответа и аккуратно парсит JSON.
-    // Если бэкенд вернул не JSON (например, HTML-страницу 404, потому что
-    // роут не зарегистрирован) - кидает понятную ошибку вместо молчаливого падения.
     function apiRequest(url, options) {
         return fetch(url, options).then(function (res) {
             return res.text().then(function (text) {
@@ -88,7 +86,7 @@
                     data = text ? JSON.parse(text) : {};
                 } catch (e) {
                     console.error('Ответ сервера:', text);
-                    throw new Error('Сервер вернул не JSON (код ' + res.status + '). Проверь консоль и что роут /api/goals подключён в приложении.');
+                    throw new Error('Сервер вернул не JSON (код ' + res.status + ').');
                 }
                 if (!res.ok && !data.error && !data.errors) {
                     throw new Error('Ошибка сервера, код ' + res.status);
@@ -101,8 +99,9 @@
     function resetForm() {
         form.reset();
         idField.value = '';
+        currentGroup.style.display = 'inline-block'; // Показываем поле обратно при сбросе
         currentField.disabled = false;
-        descriptionField.disabled = false;
+        descriptionField.disabled = false; // ТЕПЕРЬ НЕ БЛОКИРУЕМ
         submitBtn.textContent = 'Создать цель';
         cancelBtn.style.display = 'none';
     }
@@ -175,16 +174,20 @@
     }
 
     function editGoal(goal) {
-        // процедура update_goals меняет только name, target_amount, deadline,
-        // поэтому "накоплено" и "описание" в режиме редактирования блокируем
         idField.value = goal.id;
         nameField.value = goal.name;
         targetField.value = goal.target_amount;
+        
+        // ТЕПЕРЬ ТУТ: Полностью скрываем поле "Уже накоплено" при изменении цели
         currentField.value = goal.current_amount;
-        currentField.disabled = true;
+        currentGroup.style.display = 'none'; 
+        
         deadlineField.value = goal.deadline || '';
+        
+        // ТЕПЕРЬ ТУТ: Описание доступно для редактирования
         descriptionField.value = goal.description || '';
-        descriptionField.disabled = true;
+        descriptionField.disabled = false; 
+        
         submitBtn.textContent = 'Сохранить изменения';
         cancelBtn.style.display = 'inline-block';
         window.scrollTo(0, form.offsetTop);
@@ -237,13 +240,15 @@
         var id = idField.value;
 
         if (id) {
+            // Запрос на ОБНОВЛЕНИЕ (PUT)
             apiRequest(apiBase + '/' + id, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: nameField.value,
                     target_amount: targetField.value,
-                    deadline: deadlineField.value || null
+                    deadline: deadlineField.value || null,
+                    description: descriptionField.value || null // ТЕПЕРЬ ТУТ: отправляем описание
                 })
             })
                 .then(function (data) {
@@ -260,6 +265,7 @@
                     console.error(err);
                 });
         } else {
+            // Запрос на СОЗДАНИЕ (POST)
             apiRequest(apiBase, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
