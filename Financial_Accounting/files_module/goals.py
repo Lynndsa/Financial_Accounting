@@ -1,11 +1,4 @@
 """
-files_module/goals.py
-API-маршруты для модуля "Копилка" (goals).
-
-Подключите этот модуль в основном файле приложения (там же, где
-уже импортируются auth.py / security.py), например:
-    from files_module import goals  # noqa: F401  (роуты регистрируются при импорте)
-
 ВРЕМЕННО (пока нет авторизации/сессий): id_user и id_card по умолчанию
 берутся из констант DEFAULT_USER_ID / DEFAULT_CARD_ID ниже (1 и 2).
 Если в запросе явно передан id_user - используется он, иначе дефолт.
@@ -22,6 +15,7 @@ from validations.goals_validation import (
     validate_update_goal,
     validate_id,
     validate_topup_amount,
+    validate_description,  
 )
 
 # ВРЕМЕННО, пока нет авторизации/сессий: жёстко фиксируем пользователя и его карту.
@@ -60,7 +54,7 @@ def _goal_belongs_to_user(conn, goal_id, id_user):
 
 @route('/api/goals', method='GET')
 def get_goals():
-    """Список активных целей пользователя с прогрессом накопления."""
+    """Список активных целей пользователя с сортировкой по дедлайнам (пустые даты уходят вниз)."""
     id_user = request.query.get('id_user') or DEFAULT_USER_ID
     err = validate_id(id_user, 'id_user')
     if err:
@@ -70,9 +64,10 @@ def get_goals():
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
+            # Сортировка по датам: сначала ближайшие дедлайны, а NULL (цели без срока) уходят вниз
             cursor.execute(
                 'SELECT * FROM goals WHERE id_user = %s AND is_active = 1 '
-                'ORDER BY deadline IS NULL, deadline',
+                'ORDER BY deadline IS NULL ASC, deadline ASC',
                 (id_user,)
             )
             rows = cursor.fetchall()
@@ -123,7 +118,7 @@ def get_goal(goal_id):
 
 @route('/api/goals', method='POST')
 def create_goal():
-    """Создание новой цели (вызывает процедуру create_new_goal)."""
+    """Создание новой цели (вызывает процедуру create_new_goal) с проверкой уникальности названия."""
     data = _get_request_data()
     id_user = data.get('id_user') or DEFAULT_USER_ID
 
@@ -132,18 +127,18 @@ def create_goal():
         response.status = 400
         return {'error': id_err}
 
-    errors, cleaned = validate_create_goal(data)
-    if errors:
-        response.status = 400
-        return {'errors': errors}
-
-    if cleaned['id_card'] is None:
-        cleaned['id_card'] = DEFAULT_CARD_ID
-
     conn = get_connection()
     try:
+        # Передаем conn и id_user для проверки дубликатов на уровне валидатора
+        errors, cleaned = validate_create_goal(data, conn, id_user)
+        if errors:
+            response.status = 400
+            return {'errors': errors}
+
+        if cleaned['id_card'] is None:
+            cleaned['id_card'] = DEFAULT_CARD_ID
+
         with conn.cursor() as cursor:
-            # если указана карта - проверяем, что она принадлежит пользователю
             if cleaned['id_card'] is not None:
                 cursor.execute(
                     'SELECT id_card FROM accounts WHERE id_card = %s AND id_user = %s',
@@ -177,7 +172,7 @@ def create_goal():
 
 @route('/api/goals/<goal_id:int>', method='PUT')
 def update_goal(goal_id):
-    """Обновление цели: name, target_amount, deadline (процедура update_goals)."""
+    """Обновление цели слиянием переданных полей и валидацией дубликатов названий."""
     data = _get_request_data()
     id_user = data.get('id_user') or DEFAULT_USER_ID
 
@@ -186,27 +181,59 @@ def update_goal(goal_id):
         response.status = 400
         return {'error': id_err}
 
-    errors, cleaned = validate_update_goal(data)
-    if errors:
-        response.status = 400
-        return {'errors': errors}
-
-    if all(value is None for value in cleaned.values()):
-        response.status = 400
-        return {'error': 'Не передано ни одного поля для обновления'}
-
     conn = get_connection()
     try:
-        if not _goal_belongs_to_user(conn, goal_id, id_user):
+        # 1. Валидируем три базовых поля и проверяем уникальность нового имени цели
+        errors, cleaned = validate_update_goal(data, conn, id_user, goal_id)
+
+        # 2. Обрабатываем и валидируем описание вручную
+        description_raw = data.get('description')
+        desc_err = validate_description(description_raw)
+        
+        if desc_err:
+            errors['description'] = desc_err
+        else:
+            if 'description' in data:
+                cleaned['description'] = str(description_raw).strip() if description_raw and str(description_raw).strip() else ""
+            else:
+                cleaned['description'] = None
+
+        if errors:
+            response.status = 400
+            return {'errors': errors}
+
+        # Вытаскиваем текущие данные цели из БД для безопасного слияния (патча)
+        with conn.cursor() as cursor:
+            cursor.execute(
+                'SELECT name, target_amount, deadline, description FROM goals WHERE id = %s AND id_user = %s',
+                (goal_id, id_user)
+            )
+            current_db_row = cursor.fetchone()
+
+        if not current_db_row:
             response.status = 404
             return {'error': 'Цель не найдена'}
 
+        # 3. Слияние: если поле в запросе отсутствовало (None), берем старое значение из БД
+        final_name = cleaned['name'] if cleaned['name'] is not None else current_db_row['name']
+        final_target = cleaned['target_amount'] if cleaned['target_amount'] is not None else float(current_db_row['target_amount'])
+        
+        if cleaned['deadline'] is not None:
+            final_deadline = cleaned['deadline']
+        else:
+            db_deadline = current_db_row['deadline']
+            final_deadline = db_deadline.isoformat() if isinstance(db_deadline, (date, datetime)) else db_deadline
+
+        final_description = cleaned['description'] if 'description' in data else current_db_row['description']
+
+        # 4. Вызываем пересозданную хранимую процедуру
         with conn.cursor() as cursor:
             cursor.callproc('update_goals', (
                 goal_id,
-                cleaned['name'],
-                cleaned['target_amount'],
-                cleaned['deadline'],
+                final_name,
+                final_target,
+                final_deadline,
+                final_description
             ))
         conn.commit()
         return {'message': 'Цель успешно обновлена'}
@@ -247,10 +274,7 @@ def delete_goal(goal_id):
 
 @route('/api/goals/<goal_id:int>/topup', method='POST')
 def topup_goal(goal_id):
-    """
-    Пополнение копилки (увеличение current_amount).
-    Отдельной хранимки под это нет, поэтому используется обычный UPDATE.
-    """
+    """Пополнение копилки (увеличение current_amount)."""
     data = _get_request_data()
     id_user = data.get('id_user') or DEFAULT_USER_ID
     amount = data.get('amount')
@@ -298,7 +322,7 @@ def topup_goal(goal_id):
 
 @route('/api/goals/<goal_id:int>/archive', method='POST')
 def archive_goal(goal_id):
-    """Скрыть цель без удаления (is_active = 0) - вариант мягкого удаления."""
+    """Скрыть цель без удаления (is_active = 0)."""
     id_user = request.query.get('id_user') or DEFAULT_USER_ID
     id_err = validate_id(id_user, 'id_user') or validate_id(goal_id, 'id')
     if id_err:
