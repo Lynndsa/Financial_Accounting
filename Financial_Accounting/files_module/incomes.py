@@ -1,0 +1,226 @@
+from bottle import route, request, response
+from datetime import date, datetime
+from decimal import Decimal
+
+from database.db import get_connection
+from validations.incomes_validation import (
+    validate_id,
+    validate_category_name,
+    validate_create_income
+)
+
+# ВРЕМЕННО: Фиксируем пользователя и его основной счёт (пока нет авторизации)
+DEFAULT_USER_ID = 1
+DEFAULT_CARD_ID = 2
+
+
+def _serialize_row(row):
+    """Приводит типы данных строки БД к JSON-совместимому формату."""
+    result = dict(row)
+    for key, value in result.items():
+        if isinstance(value, Decimal):
+            result[key] = float(value)
+        elif isinstance(value, (date, datetime)):
+            result[key] = value.isoformat()
+    return result
+
+
+def _get_request_data():
+    if request.json:
+        return request.json
+    return dict(request.forms)
+
+
+# ==============================================================================
+# 1. РАБОТА С КАТЕГОРИЯМИ ДОХОДОВ
+# ==============================================================================
+
+@route('/api/income-categories', method='GET')
+def get_income_categories():
+    """Получить список всех доступных категорий доходов."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute('SELECT * FROM income_categories ORDER BY name ASC')
+            rows = cursor.fetchall()
+        return {'categories': [dict(r) for r in rows]}
+    except Exception as e:
+        response.status = 500
+        return {'error': 'Ошибка при получении категорий доходов', 'detail': str(e)}
+    finally:
+        conn.close()
+
+
+@route('/api/income-categories', method='POST')
+def create_income_category():
+    """Добавить новую категорию доходов (с валидацией на дубликаты)."""
+    data = _get_request_data()
+    name = data.get('name')
+
+    err = validate_category_name(name)
+    if err:
+        response.status = 400
+        return {'error': err}
+
+    name_clean = str(name).strip()
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Проверяем, нет ли уже такой категории
+            cursor.execute('SELECT id FROM income_categories WHERE name = %s', (name_clean,))
+            if cursor.fetchone():
+                response.status = 400
+                return {'error': 'Категория с таким названием уже существует'}
+
+            # Вызываем хранимую процедуру (проверь p_nameCategory vs p_nameCategories в БД)
+            cursor.callproc('create_new_income_categories', (name_clean,))
+        conn.commit()
+        response.status = 201
+        return {'message': 'Категория доходов успешно добавлена'}
+    except Exception as e:
+        conn.rollback()
+        response.status = 500
+        return {'error': 'Ошибка при добавлении категории', 'detail': str(e)}
+    finally:
+        conn.close()
+
+
+# ==============================================================================
+# 2. ОПЕРАЦИИ С ДОХОДАМИ
+# ==============================================================================
+
+@route('/api/incomes', method='POST')
+def add_income():
+    """
+    Добавить доход. 
+    Счёт (id_card) определяется автоматически по текущему дефолтному счёту.
+    Дата (date_time) подставляется сегодняшняя, если не передана.
+    """
+    data = _get_request_data()
+    
+    # Автоматически подставляем дефолтную карту, если фронтенд её не прислал
+    if 'id_card' not in data:
+        data['id_card'] = DEFAULT_CARD_ID
+
+    errors, cleaned = validate_create_income(data)
+    if errors:
+        response.status = 400
+        return {'errors': errors}
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Проверяем, принадлежит ли используемый счёт текущему пользователю
+            cursor.execute(
+                'SELECT id_card FROM accounts WHERE id_card = %s AND id_user = %s',
+                (cleaned['id_card'], DEFAULT_USER_ID)
+            )
+            if not cursor.fetchone():
+                response.status = 400
+                return {'error': 'Указанный счёт не найден или не принадлежит пользователю'}
+
+            # Внимание: В твоем дампе процедура называется create_new_income
+            # Убедись, что внутри неё инсерт идет в таблицу `incomes`
+            cursor.callproc('create_new_income', (
+                cleaned['id_category'],
+                cleaned['id_card'],
+                cleaned['date_time'],
+                cleaned['sum']
+            ))
+            
+            # Обновляем баланс на счете (увеличиваем на сумму пришедшего дохода)
+            cursor.execute(
+                'UPDATE accounts SET balance = balance + %s WHERE id_card = %s',
+                (cleaned['sum'], cleaned['id_card'])
+            )
+
+        conn.commit()
+        response.status = 201
+        return {'message': 'Доход успешно зафиксирован'}
+    except Exception as e:
+        conn.rollback()
+        response.status = 500
+        return {'error': 'Ошибка при создании операции дохода', 'detail': str(e)}
+    finally:
+        conn.close()
+
+
+@route('/api/incomes/history', method='GET')
+def get_incomes_history():
+    """
+    Получить историю доходов с фильтрацией по месяцу и категории.
+    Параметры запроса:
+      - month: строка формата YYYY-MM (по умолчанию текущий месяц)
+      - id_category: ID категории (если не передан или равен "all" — выведутся все)
+    """
+    # Если месяц не передан, берём текущий системный месяц в формате "ГГГГ-ММ"
+    selected_month = request.query.get('month') or date.today().strftime('%Y-%m')
+    id_category = request.query.get('id_category') or 'all'
+
+    # Базовый SQL запрос с джоином названия категории
+    query = """
+        SELECT i.id_income, i.sum, i.date_time, c.name AS category_name, a.name_card
+        FROM incomes i
+        JOIN income_categories c ON i.id_category = c.id
+        JOIN accounts a ON i.id_card = a.id_card
+        WHERE a.id_user = %s 
+          AND DATE_FORMAT(i.date_time, '%%Y-%%m') = %s
+    """
+    params = [DEFAULT_USER_ID, selected_month]
+
+    # Добавляем фильтр по конкретной категории, если это не "all"
+    if id_category != 'all':
+        query += " AND i.id_category = %s"
+        params.append(int(id_category))
+
+    # Сортировка истории от новых к старым (по убыванию даты)
+    query += " ORDER BY i.date_time DESC, i.id_income DESC"
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+        return {'history': [_serialize_row(r) for r in rows]}
+    except Exception as e:
+        response.status = 500
+        return {'error': 'Ошибка при получении истории доходов', 'detail': str(e)}
+    finally:
+        conn.close()
+
+
+@route('/api/incomes/chart', method='GET')
+def get_incomes_chart_data():
+    """
+    Возвращает сгруппированные данные для построения диаграммы доходов за указанный месяц.
+    Параметры:
+      - month: строка формата YYYY-MM (по умолчанию текущий месяц)
+    """
+    selected_month = request.query.get('month') or date.today().strftime('%Y-%m')
+
+    query = """
+        SELECT c.name AS category_name, SUM(i.sum) AS total_sum
+        FROM incomes i
+        JOIN income_categories c ON i.id_category = c.id
+        JOIN accounts a ON i.id_card = a.id_card
+        WHERE a.id_user = %s 
+          AND DATE_FORMAT(i.date_time, '%%Y-%%m') = %s
+        GROUP BY c.id, c.name
+        ORDER BY total_sum DESC
+    """
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(query, [DEFAULT_USER_ID, selected_month])
+            rows = cursor.fetchall()
+        
+        # Превращаем Decimal в float для графиков фронтенда
+        chart_data = [{'category': r['category_name'], 'sum': float(r['total_sum'])} for r in rows]
+        return {'chart_data': chart_data}
+    except Exception as e:
+        response.status = 500
+        return {'error': 'Ошибка при формировании данных диаграммы', 'detail': str(e)}
+    finally:
+        conn.close()
