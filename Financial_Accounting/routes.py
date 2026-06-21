@@ -8,6 +8,7 @@ from files_module import goals, income, expenses
 from database.db import get_connection
 
 from validations.auth_validation import validate_registration
+from validations.personal_account_validation import validate_personal_account
 
 @route('/')
 def home():
@@ -41,10 +42,45 @@ def login():
             max_age=3600,
             path='/'
         )
+
+        conn = get_connection()
+
+        try:
+            with conn.cursor() as cursor:
+
+                cursor.execute("""
+                    SELECT
+                        p.name,
+                        p.lastname,
+                        p.surname,
+                        p.datebirth,
+                        p.email,
+                        u.username,
+                        a.name_card,
+                        a.balance,
+                        c.name AS currency_name
+                    FROM profiles p
+                    JOIN user u
+                        ON p.id_user = u.id_user
+                    LEFT JOIN accounts a
+                        ON u.id_user = a.id_user
+                    LEFT JOIN currencies c
+                        ON a.id_currencies = c.id_currencies
+                    WHERE u.username = %s
+                """, (username,))
+
+                user_data = cursor.fetchone()
+
+        finally:
+            conn.close()
+
         return template(
             'personal_account.tpl',
             title='Личный кабинет',
-            year=datetime.now().year
+            year=datetime.now().year,
+            user=user_data,
+            errors={},
+            success=''
         )
 
     return template(
@@ -249,8 +285,181 @@ def personal_account():
     if not username:
         return redirect('/')
 
+    conn = get_connection()
+
+    try:
+        with conn.cursor() as cursor:
+
+            cursor.execute("""
+                SELECT
+                    p.name,
+                    p.lastname,
+                    p.surname,
+                    p.datebirth,
+                    p.email,
+                    u.username,
+                    a.name_card,
+                    a.balance,
+                    c.name AS currency_name
+                FROM profiles p
+                JOIN user u
+                    ON p.id_user = u.id_user
+                LEFT JOIN accounts a
+                    ON u.id_user = a.id_user
+                LEFT JOIN currencies c
+                    ON a.id_currencies = c.id_currencies
+                WHERE u.username = %s
+            """, (username,))
+
+            user_data = cursor.fetchone()
+
+            if not user_data:
+                response.delete_cookie('username', path='/')
+                return template('hello_page.tpl')
+
+    finally:
+        conn.close()
+
     return template(
         'personal_account.tpl',
         title='Личный кабинет',
-        year=datetime.now().year
+        year=datetime.now().year,
+        user=user_data,
+        errors={},
+        success=''
+    )
+
+@route('/update_personal_account', method='post')
+def update_personal_account():
+    username = unquote(request.get_cookie('username') or '')
+
+    if not username:
+        return redirect('/')
+
+    name = request.forms.getunicode('name')
+    lastname = request.forms.getunicode('lastname')
+    surname = request.forms.getunicode('surname')
+    datebirth = request.forms.getunicode('datebirth')
+    name_card = request.forms.getunicode('name_card')
+
+    errors = validate_personal_account(name, lastname, surname, datebirth, name_card)
+    
+    conn = get_connection()
+
+    if errors:
+
+        try:
+            with conn.cursor() as cursor:
+
+                cursor.execute("""
+                    SELECT
+                        p.name,
+                        p.lastname,
+                        p.surname,
+                        p.datebirth,
+                        p.email,
+                        u.username,
+                        a.name_card,
+                        a.balance,
+                        c.name AS currency_name
+                    FROM profiles p
+                    JOIN user u
+                        ON p.id_user = u.id_user
+                    LEFT JOIN accounts a
+                        ON u.id_user = a.id_user
+                    LEFT JOIN currencies c
+                        ON a.id_currencies = c.id_currencies
+                    WHERE u.username = %s
+                """, (username,))
+
+                user_data = cursor.fetchone()
+
+                if not user_data:
+                    response.delete_cookie('username', path='/')
+                    return template('hello_page.tpl')
+
+            conn.commit()
+
+        finally:
+            conn.close()
+
+        return template(
+            'personal_account.tpl',
+            title='Личный кабинет',
+            year=datetime.now().year,
+            user=user_data,
+            errors=errors,
+            success=''
+        )
+
+    
+    try:
+        with conn.cursor() as cursor:
+
+            cursor.execute("""
+                UPDATE profiles p
+                JOIN user u ON p.id_user=u.id_user
+                SET
+                    p.name=%s,
+                    p.lastname=%s,
+                    p.surname=%s,
+                    p.datebirth=%s
+                WHERE u.username=%s
+            """, (
+                name,
+                lastname,
+                surname,
+                datebirth,
+                username
+            ))
+
+            cursor.execute("""
+                UPDATE accounts a
+                JOIN user u ON a.id_user=u.id_user
+                SET a.name_card=%s
+                WHERE u.username=%s
+            """, (
+                name_card,
+                username
+            ))
+
+            cursor.execute("""
+                SELECT
+                    p.name,
+                    p.lastname,
+                    p.surname,
+                    p.datebirth,
+                    p.email,
+                    u.username,
+                    a.name_card,
+                    a.balance,
+                    c.name AS currency_name
+                FROM profiles p
+                JOIN user u
+                    ON p.id_user = u.id_user
+                LEFT JOIN accounts a
+                    ON u.id_user = a.id_user
+                LEFT JOIN currencies c
+                    ON a.id_currencies = c.id_currencies
+                WHERE u.username = %s
+            """, (username,))
+
+            user_data = cursor.fetchone()
+
+            if not user_data:
+                response.delete_cookie('username', path='/')
+                return template('hello_page.tpl')
+
+        conn.commit()
+
+    finally:
+        conn.close()
+
+    return template(
+        'personal_account.tpl',
+        title='Личный кабинет',
+        year=datetime.now().year,
+        user=user_data,
+        errors={},
+        success='Данные успешно обновлены'
     )
