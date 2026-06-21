@@ -113,7 +113,7 @@ def get_goal(goal_id):
 
 @route('/api/goals', method='POST')
 def create_goal():
-    """Создание новой цели."""
+    """Создание новой цели с вызовом процедуры create_new_goal (строго 7 параметров)."""
     data = _get_request_data()
     id_user = data.get('user_id')
     id_card = data.get('id_card')
@@ -139,6 +139,7 @@ def create_goal():
                 response.status = 400
                 return {'error': 'Указанный счет не найден или не принадлежит пользователю'}
 
+            # Передаем строго 7 параметров в соответствии с PROCEDURE create_new_goal
             cursor.callproc('create_new_goal', (
                 int(id_user),
                 cleaned['name'],
@@ -163,7 +164,7 @@ def create_goal():
 
 @route('/api/goals/<goal_id:int>', method='PUT')
 def update_goal(goal_id):
-    """Обновление цели."""
+    """Обновление метаданных цели через процедуру update_goals."""
     data = _get_request_data()
     id_user = data.get('user_id')
 
@@ -232,7 +233,7 @@ def update_goal(goal_id):
 
 @route('/api/goals/<goal_id:int>', method='DELETE')
 def delete_goal(goal_id):
-    """Удаление цели."""
+    """Удаление цели через процедуру delete_goals."""
     id_user = request.query.get('user_id')
     id_err = validate_id(id_user, 'user_id') or validate_id(goal_id, 'id')
     if id_err:
@@ -259,12 +260,14 @@ def delete_goal(goal_id):
 
 @route('/api/goals/<goal_id:int>/topup', method='POST')
 def topup_goal(goal_id):
-    """Пополнение копилки (прибавляем к цели) со списанием с карты (вычитаем оттуда) и фиксацией расхода."""
+    """
+    Пополнение копилки делегировано триггерам БД.
+    Бэкенд только валидирует баланс и инкрементирует текущую сумму цели.
+    """
     data = _get_request_data()
     id_user = data.get('user_id')
     amount = data.get('amount')
 
-    # 1. Валидации ID и суммы
     id_err = validate_id(id_user, 'user_id') or validate_id(goal_id, 'id')
     if id_err:
         response.status = 400
@@ -279,9 +282,9 @@ def topup_goal(goal_id):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # 2. Получаем информацию о цели (копилке)
+            # 1. Получаем текущие данные о цели
             cursor.execute(
-                'SELECT name, current_amount, target_amount, id_card, is_active FROM goals WHERE id = %s AND id_user = %s',
+                'SELECT current_amount, target_amount, id_card, is_active FROM goals WHERE id = %s AND id_user = %s',
                 (goal_id, id_user)
             )
             goal_row = cursor.fetchone()
@@ -294,13 +297,11 @@ def topup_goal(goal_id):
                 return {'error': 'Эта цель уже закрыта или заархивирована'}
 
             id_card = goal_row['id_card']
-            goal_name = goal_row['name']
-            
             if not id_card:
                 response.status = 400
-                return {'error': 'К этой цели не привязан счет/карта для списания средств'}
+                return {'error': 'К этой цели не привязан счет для списания'}
 
-            # 3. Проверяем баланс карты/счета в accounts (откуда списываем)
+            # 2. Проверяем баланс карты на бэкенде
             cursor.execute('SELECT balance FROM accounts WHERE id_card = %s', (id_card,))
             account_row = cursor.fetchone()
             if not account_row:
@@ -311,39 +312,11 @@ def topup_goal(goal_id):
                 response.status = 400
                 return {'error': f"На счете недостаточно средств. Баланс: {account_row['balance']} ₽"}
 
-            # 4. Категория расхода: "Копилка: Название"
-            expense_cat_name = f"Копилка: {goal_name}"
-            cursor.execute('SELECT id FROM expense_categories WHERE name = %s', (expense_cat_name,))
-            category_row = cursor.fetchone()
-            
-            if category_row:
-                id_category = category_row['id']
-            else:
-                # Если категории нет — создаем
-                cursor.callproc('create_new_expense_category', (expense_cat_name,))
-                cursor.execute('SELECT LAST_INSERT_ID() as id')
-                id_category = cursor.fetchone()['id']
-
-            # 5. Добавляем операцию в РАСХОДЫ (деньги ушли в копилку)
-            current_date_str = date.today().isoformat()
-            cursor.callproc('create_new_expenses', (
-                int(id_category),
-                int(id_card),
-                current_date_str,
-                topup_sum
-            ))
-
-            # 6. СПИСЫВАЕМ деньги с баланса карты/счета (уменьшаем баланс карты)
-            cursor.execute(
-                'UPDATE accounts SET balance = balance - %s WHERE id_card = %s',
-                (topup_sum, id_card)
-            )
-
-            # 7. НАКАПЛИВАЕМ деньги в копилке: прибавляем сумму пополнения к текущей сумме цели (current_amount)
+            # 3. ОБНОВЛЕНИЕ СУММЫ ЦЕЛИ
+            # Триггер goals_AFTER_UPDATE перехватит это изменение, посчитает v_diff и добавит системный расход.
             new_amount = float(goal_row['current_amount']) + topup_sum
             target_amount = float(goal_row['target_amount'])
             
-            # Проверяем, выполнена ли цель
             is_completed = new_amount >= target_amount
             new_active_status = 0 if is_completed else 1
 
@@ -352,22 +325,16 @@ def topup_goal(goal_id):
                 (new_amount, new_active_status, goal_id)
             )
 
-        # Подтверждаем транзакцию
         conn.commit()
-        
         return {
-            'message': 'Копилка успешно пополнена, расход зафиксирован!',
+            'message': 'Копилка успешно пополнена, изменения обработаны триггером БД!',
             'current_amount': new_amount,
             'is_completed': is_completed,
         }
-
     except Exception as e:
         conn.rollback()
         response.status = 500
-        import traceback
-        error_details = traceback.format_exc()
-        print(error_details)  # Выведет полную ошибку в терминал Питона
-        return {'error': 'Ошибка при проведении транзакции пополнения', 'message': str(e), 'detail': error_details}
+        return {'error': 'Ошибка при пополнении копилки', 'detail': str(e)}
     finally:
         conn.close()
 

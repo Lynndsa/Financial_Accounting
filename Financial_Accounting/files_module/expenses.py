@@ -34,7 +34,8 @@ def get_expense_categories():
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute('SELECT * FROM expense_categories ORDER BY name ASC')
+            # Исключаем категорию "Копилка" из выпадающего списка для пользователя
+            cursor.execute("SELECT * FROM expense_categories WHERE name != 'Копилка' ORDER BY name ASC")
             rows = cursor.fetchall()
         return {'categories': [dict(r) for r in rows]}
     except Exception as e:
@@ -55,6 +56,12 @@ def create_expense_category():
         return {'error': err}
 
     name_clean = str(name).strip()
+    
+    # Защита: не даем пользователю вручную создать еще одну категорию "Копилка"
+    if name_clean.lower() == 'копилка':
+        response.status = 400
+        return {'error': 'Категория "Копилка" является системной и не может быть создана вручную'}
+
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -63,7 +70,6 @@ def create_expense_category():
                 response.status = 400
                 return {'error': 'Категория расходов с таким названием уже существует'}
 
-            # Вызов хранимой процедуры
             cursor.callproc('create_new_expense_category', (name_clean,))
         conn.commit()
         response.status = 201
@@ -102,13 +108,10 @@ def add_expense():
                 response.status = 400
                 return {'error': 'Указанный счёт не найден или не принадлежит пользователю'}
 
-            # Валидация остатка: проверяем, хватает ли денег на счете перед покупкой
             if float(account['balance']) < cleaned['sum']:
                 response.status = 400
                 return {'error': f"Недостаточно средств. Текущий баланс: {account['balance']} ₽"}
 
-            # Вызов хранимой процедуры создания расхода.
-            # Триггер expenses_AFTER_INSERT в БД сам уменьшит баланс счета!
             cursor.callproc('create_new_expenses', (
                 cleaned['id_category'],
                 cleaned['id_card'],
@@ -122,8 +125,6 @@ def add_expense():
     except Exception as e:
         conn.rollback()
         response.status = 500
-        import traceback
-        print(traceback.format_exc())
         return {'error': 'Ошибка при создании операции расхода', 'detail': str(e)}
     finally:
         conn.close()
@@ -135,7 +136,6 @@ def get_expenses_history():
     selected_month = request.query.get('month') or date.today().strftime('%Y-%m')
     id_category = request.query.get('id_category') or 'all'
 
-    # ИСПРАВЛЕНО: Изменен 'i.id_card' на 'e.id_card' во втором JOIN
     query = """
         SELECT e.id_expense, e.sum, e.date_time, c.name AS category_name, a.name_card
         FROM expenses e
@@ -160,8 +160,6 @@ def get_expenses_history():
         return {'history': [_serialize_row(r) for r in rows]}
     except Exception as e:
         response.status = 500
-        import traceback
-        print(traceback.format_exc())  # Логируем точную ошибку в консоль
         return {'error': 'Ошибка при получении истории расходов', 'detail': str(e)}
     finally:
         conn.close()
@@ -200,39 +198,37 @@ def get_expenses_chart_data():
 
 @route('/api/expenses/<expense_id:int>', method='DELETE')
 def delete_expense(expense_id):
-    """Удаление операции расхода конкретного пользователя. Возврат баланса автоматизирован триггером."""
+    """
+    Удаление расхода из истории.
+    Откат суммы цели (goals) делает триггер expenses_BEFORE_DELETE.
+    Возврат денег на карту делает триггер expenses_AFTER_DELETE автоматически.
+    """
     id_user = request.query.get('user_id')
-
-    id_err = validate_id(id_user, 'user_id') or validate_id(expense_id, 'id')
-    if id_err:
-        response.status = 400
-        return {'error': id_err}
 
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # Проверяем владельца транзакции
+            # Проверяем, существует ли расход и принадлежит ли он пользователю
             cursor.execute('''
                 SELECT e.id_expense
                 FROM expenses e
                 JOIN accounts a ON e.id_card = a.id_card
                 WHERE e.id_expense = %s AND a.id_user = %s
             ''', (expense_id, id_user))
+            expense = cursor.fetchone()
             
-            if not cursor.fetchone():
+            if not expense:
                 response.status = 404
                 return {'error': 'Расход не найден или доступ ограничен'}
 
-            # Вызываем хранимую процедуру удаления расхода.
+            # Просто вызываем удаление строки. Всю зеркальную логику выполнит СУБД!
             cursor.callproc('delete_expense', (expense_id,))
         
         conn.commit()
-        return {'message': 'Операция расхода успешно удалена!'}
+        return {'message': 'Операция расхода успешно удалена, баланс и цели скорректированы базой данных.'}
     except Exception as e:
         conn.rollback()
         response.status = 500
-        import traceback
-        print(traceback.format_exc())
         return {'error': 'Ошибка при удалении расходов', 'detail': str(e)}
     finally:
         conn.close()
