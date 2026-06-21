@@ -106,7 +106,9 @@
         currentField.disabled = false;
         descriptionField.disabled = false;
         submitBtn.textContent = 'Создать цель';
-        cancelBtn.style.display = 'none';
+        if (cancelBtn) cancelBtn.style.display = 'none';
+        var formWrapper = document.getElementById('form-wrapper');
+        if (formWrapper) formWrapper.style.display = 'none'; // Закрываем контейнер формы
     }
 
     function loadGoals() {
@@ -114,66 +116,67 @@
         apiRequest(apiBase + '?user_id=' + CURRENT_USER_ID)
             .then(function (data) {
                 if (data.error) {
-                    tableBody.innerHTML = '<tr><td colspan="7">' + data.error + '</td></tr>';
+                    tableBody.innerHTML = '<div class="loading-status">' + data.error + '</div>';
                     return;
                 }
                 renderGoals(data.goals || []);
             })
             .catch(function (err) {
-                tableBody.innerHTML = '<tr><td colspan="7">Не удалось загрузить цели: ' + err.message + '</td></tr>';
+                tableBody.innerHTML = '<div class="loading-status">Не удалось загрузить цели: ' + err.message + '</div>';
                 console.error(err);
             });
     }
 
+    // РЕНДЕРИНГ КАРТОЧЕК: Переводит список целей из табличного формата в блочные карточки с прогресс-барами
     function renderGoals(goals) {
         if (!goals.length) {
-            tableBody.innerHTML = '<tr><td colspan="7">Пока нет целей</td></tr>';
+            tableBody.innerHTML = '<div class="loading-status">Пока нет целей</div>';
             return;
         }
 
         tableBody.innerHTML = '';
 
         goals.forEach(function (goal) {
-            var row = document.createElement('tr');
+            var item = document.createElement('div');
+            item.className = 'goal-item';
+
             var progress = goal.progress_percent || 0;
+            if (progress > 100) progress = 100; // Ограничиваем заполнение шкалы до 100%
 
-            row.innerHTML =
-                '<td>' + goal.name + '</td>' +
-                '<td>' + goal.current_amount + ' ₽</td>' +
-                '<td>' + goal.target_amount + ' ₽</td>' +
-                '<td>' +
-                    '<div class="progress" style="margin-bottom:0;">' +
-                        '<div class="progress-bar" style="width:' + progress + '%;">' + progress + '%</div>' +
+            // Генерируем адаптивную разметку для карточки с прогресс-баром
+            item.innerHTML =
+                '<div class="goal-header">' +
+                    '<div class="goal-title">' + goal.name + ' — ' + goal.current_amount + ' ₽ из ' + goal.target_amount + ' ₽</div>' +
+                    '<div class="goal-actions"></div>' + 
+                '</div>' +
+                '<div class="progress-bar-container">' +
+                    '<div class="progress-bar-fill" style="width:' + progress + '%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #4c0505; font-size: 1.1rem;">' + 
+                        (progress > 5 ? progress + '%' : '') + 
                     '</div>' +
-                '</td>' +
-                '<td>' + (goal.deadline || '-') + '</td>' +
-                '<td>' + (goal.description || '-') + '</td>' +
-                '<td></td>';
+                '</div>';
 
-            var actionsCell = row.lastElementChild;
+            var actionsContainer = item.querySelector('.goal-actions');
 
             var topupBtn = document.createElement('button');
-            topupBtn.className = 'btn btn-success btn-xs';
+            topupBtn.className = 'btn-inline btn-topup';
             topupBtn.textContent = 'Пополнить';
             topupBtn.onclick = function () { topupGoal(goal.id); };
 
             var editBtn = document.createElement('button');
-            editBtn.className = 'btn btn-default btn-xs';
+            editBtn.className = 'btn-inline btn-edit';
             editBtn.textContent = 'Изменить';
             editBtn.onclick = function () { editGoal(goal); };
 
             var deleteBtn = document.createElement('button');
-            deleteBtn.className = 'btn btn-danger btn-xs';
+            deleteBtn.className = 'btn-inline btn-delete';
             deleteBtn.textContent = 'Удалить';
             deleteBtn.onclick = function () { deleteGoal(goal.id); };
 
-            actionsCell.appendChild(topupBtn);
-            actionsCell.appendChild(document.createTextNode(' '));
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(document.createTextNode(' '));
-            actionsCell.appendChild(deleteBtn);
+            actionsContainer.appendChild(topupBtn);
+            actionsContainer.appendChild(editBtn);
+            actionsContainer.appendChild(deleteBtn);
 
-            tableBody.appendChild(row);
+            tableBody.appendChild(item);
         });
     }
 
@@ -190,8 +193,8 @@
         descriptionField.disabled = false; 
         
         submitBtn.textContent = 'Сохранить изменения';
-        cancelBtn.style.display = 'inline-block';
-        window.scrollTo(0, form.offsetTop);
+        if (cancelBtn) cancelBtn.style.display = 'inline-block';
+        window.scrollTo(0, form.offsetTop - 100);
     }
 
     function deleteGoal(id) {
@@ -213,8 +216,15 @@
     }
 
     function topupGoal(id) {
-        var amount = prompt('Сумма пополнения, ₽:');
-        if (amount === null) return;
+        var amountStr = prompt('Сумма пополнения, ₽:');
+        if (amountStr === null) return;
+        
+        var amount = parseFloat(amountStr.trim());
+        if (isNaN(amount) || amount <= 0 || !isFinite(amount)) {
+            showMessage('Пожалуйста, введите корректную сумму больше 0', true);
+            return;
+        }
+
         apiRequest(apiBase + '/' + id + '/topup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

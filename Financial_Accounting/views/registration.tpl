@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Регистрация</title>
-    <link rel="preconnect" href="https://googleapis.com">
-    <link rel="preconnect" href="https://gstatic.com" crossorigin>
-    <link href="https://googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="static/content/registration.css">
 </head>
 <body>
@@ -40,7 +40,7 @@
             </div>
 
             <div class="input-group">
-                <label for="reg_email">Email</label>
+                <label for="reg_email">Почта</label>
                 <input type="email" id="reg_email" name="email" placeholder="Email" value="{{email}}">
             </div>
 
@@ -50,7 +50,7 @@
             </div>
 
             <div class="input-group">
-                <label for="reg_password2">Повтор</label>
+                <label for="reg_password2">Пароль</label>
                 <input type="password" id="reg_password2" name="password2" placeholder="Повторите пароль" value="{{password2}}">
             </div>
 

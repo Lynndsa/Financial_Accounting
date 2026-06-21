@@ -1,3 +1,391 @@
-body
-{
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #BA5555; /* Розовато-красный базовый фон всей страницы */
+    color: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    overflow-x: hidden;
+    position: relative;
+    width: 100%;
+}
+
+    /* Эффект вытянутого горизонтального излома сверху */
+    body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 155px;
+        background-color: #6b1111; /* Тень излома */
+        clip-path: polygon(0 0, 100% 0, 100% 155px, 55% 95px, 45% 135px, 0 65px);
+        z-index: -2;
+    }
+
+    body::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 140px; /* Основная фигура */
+        background-color: #B40000;
+        clip-path: polygon(0 0, 100% 0, 100% 140px, 55% 80px, 45% 120px, 0 50px);
+        z-index: -1;
+    }
+
+/* Левое боковое меню (Сайдбар) */
+.sidebar {
+    width: 260px;
+    background-color: #4c0505;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2.5rem 0;
+    flex-shrink: 0;
+    z-index: 10;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.25);
+}
+
+.menu-top {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.menu-item {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 1.25rem;
+    font-weight: 500;
+    padding: 0.8rem 2.5rem;
+    transition: all 0.2s ease;
+}
+
+    .menu-item:hover, .menu-item.active {
+        color: #ffffff;
+        font-weight: 700;
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+.exit-btn {
+    margin-top: auto;
+}
+
+/* Основной контент справа — РАСТЯНУТ ДО САМОГО КОНЦА ПРАВОЙ ГРАНИЦЫ */
+.main-content {
+    flex: 1;
+    padding: 6rem 1.5rem 4rem 3rem; /* Прижимает блоки в край экрана */
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    z-index: 1;
+    align-self: stretch;
+    width: 100%;
+}
+
+/* Верхняя панель: ОДНА КНОПКА СЛЕВА, ДРУГАЯ СПРАВА */
+.action-bar {
+    display: flex;
+    justify-content: space-between; /* Раскидывает верхние кнопки по противоположным сторонам */
+    width: 100%;
+}
+
+.btn {
+    font-family: 'Inter', sans-serif;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Верхние кнопки */
+.btn-action {
+    background-color: #5c0707;
+    color: #ffffff;
+    font-size: 1.35rem;
+    font-weight: 700;
+    padding: 1.2rem 4.5rem;
+    border-radius: 30px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+    .btn-action:hover {
+        background-color: #450a0a;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+    }
+
+/* ФОРМА: Всплывающее по центру модальное окно */
+.form-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Идеальное центрирование */
+    background-color: #5c0707;
+    border-radius: 40px;
+    padding: 4rem 4.5rem;
+    width: 90%;
+    max-width: 800px; /* Аккуратная фиксированная ширина для центрального окна */
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
+    z-index: 1000; /* Самый верхний слой над контентом */
+}
+
+/* Затемняющая подложка под модальным окном */
+.form-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.65); /* Размытие заднего фона */
+    z-index: 999;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    margin-bottom: 2.5rem;
+}
+
+    .form-grid .full-width {
+        grid-column: 1 / -1;
+    }
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+    .form-group label {
+        font-weight: 700;
+        font-size: 1.3rem;
+        letter-spacing: 0.5px;
+    }
+
+    .form-group input {
+        height: 58px;
+        border-radius: 22px;
+        border: none;
+        padding: 0 2rem;
+        font-size: 1.2rem;
+        color: #333333;
+        background-color: #ffffff;
+        outline: none;
+    }
+
+        .form-group input:focus {
+            box-shadow: 0 0 0 5px rgba(180, 0, 0, 0.5);
+        }
+
+.form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1.5rem; /* Красивый зазор между кнопками модалки */
+}
+
+.btn-submit {
+    background-color: #b15d5d;
+    color: white;
+    padding: 1.3rem 5.5rem;
+    font-size: 1.35rem;
+    font-weight: 700;
+    border-radius: 20px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+}
+
+    .btn-submit:hover {
+        background-color: #a04c4c;
+        transform: translateY(-1px);
+    }
+
+.btn-cancel {
+    background-color: #6b7280; /* Комфортный серый цвет кнопки отмены */
+    color: white;
+    padding: 1.3rem 4rem;
+    font-size: 1.35rem;
+    font-weight: 700;
+    border-radius: 20px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+}
+
+    .btn-cancel:hover {
+        background-color: #4b5563;
+    }
+
+/* КАРТОЧКА СПИСКА ЦЕЛЕЙ */
+.goals-wrapper {
+    background-color: #5c0707;
+    border-radius: 40px;
+    padding: 4rem 4.5rem;
+    width: 100%;
+    max-width: 100%;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+}
+
+.goals-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    width: 100%;
+}
+
+/* Индивидуальная карточка цели */
+.goal-item {
+    background-color: rgba(0, 0, 0, 0.22);
+    padding: 2.5rem 3rem;
+    border-radius: 35px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.8rem;
+    width: 100%;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Строка заголовка карточки распределяет элементы по всей ширине */
+.goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+/* Заголовок текстового блока */
+.goal-title {
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    flex: 1;
+    white-space: normal;
+}
+
+/* Кнопки действий */
+.goal-actions {
+    display: flex;
+    gap: 1.2rem;
+    flex-shrink: 0;
+}
+
+.btn-inline {
+    padding: 0.9rem 2.4rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    border-radius: 18px;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.btn-topup {
+    background-color: #22c55e;
+}
+
+    .btn-topup:hover {
+        background-color: #16a34a;
+        transform: translateY(-2px);
+    }
+
+.btn-edit {
+    background-color: #6b7280;
+}
+
+    .btn-edit:hover {
+        background-color: #4b5563;
+        transform: translateY(-2px);
+    }
+
+.btn-delete {
+    background-color: #ef4444;
+}
+
+    .btn-delete:hover {
+        background-color: #dc2626;
+        transform: translateY(-2px);
+    }
+
+/* Контейнер прогресс-бара */
+.progress-bar-container {
+    width: 100%;
+    height: 48px;
+    background-color: #ffffff;
+    border-radius: 24px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Ярко-зеленый наполнитель */
+.progress-bar-fill {
+    height: 100%;
+    background-color: #66ff66;
+    border-radius: 24px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.loading-status {
+    font-size: 1.4rem;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 3rem 0;
+}
+
+/* Адаптируемость под экраны смартфонов */
+@media (max-width: 900px) {
+    body {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        min-height: auto;
+        flex-direction: row;
+        padding: 1rem;
+    }
+
+    .menu-top {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .main-content {
+        padding: 3rem 1.5rem;
+        width: 100%;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-container {
+        padding: 2rem 1.5rem;
+        width: 95%;
+    }
+
+    .goal-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+
+    .goal-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .btn-inline {
+        flex-grow: 1;
+        text-align: center;
+    }
 }

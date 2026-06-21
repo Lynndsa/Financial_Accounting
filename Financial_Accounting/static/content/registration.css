@@ -6,95 +6,104 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #BA5555; /* Базовый розовато-красный фон */
+    background-color: #BA5555; /* Base light red background */
     color: #ffffff;
     min-height: 100vh;
     display: flex;
-    align-items: center;
-    justify-content: flex-start; /* Карточка прижата к левой стороне */
-    padding: 4rem 10% 2rem 10%; /* Оставили свободное место под кнопку Назад */
+    align-items: center; /* Center the form vertically */
+    justify-content: flex-end; /* Shift the card to the right side */
+    padding: 1.5rem 4% 3.5rem 4%;
     overflow-x: hidden;
     position: relative;
 }
 
-    /* СЛОЙ 1 (НИЖНИЙ): Темная фигура, которая работает как ТЕНЬ */
+    /* LAYER 1 (BOTTOM): Dark zig-zag figure */
     body::before {
         content: "";
         position: absolute;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 310px;
+        width: 75%;
+        height: 100%;
         background-color: #4c0505;
-        clip-path: polygon(0 0, 100% 0, 100% 310px, 55% 150px, 45% 210px, 0 110px);
+        clip-path: polygon(0 0, 70% 0, 50% 90px, 35% 130px, 40% 210px, 20% 280px, 0 340px);
         z-index: -2;
     }
 
-    /* СЛОЙ 2 (ВЕРХНИЙ): Фигура посветлее */
+    /* LAYER 2 (TOP): Brighter red zig-zag figure */
     body::after {
         content: "";
         position: absolute;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 280px;
+        width: 75%;
+        height: 100%;
         background-color: #B40000;
-        clip-path: polygon(0 0, 100% 0, 100% 280px, 55% 120px, 45% 180px, 0 80px);
+        clip-path: polygon(0 0, 68% 0, 48% 80px, 33% 120px, 38% 195px, 18% 265px, 0 320px);
         z-index: -1;
     }
 
-/* Кнопка Назад */
+/* РљРЅРѕРїРєР° РќРђР—РђР” вЂ” РЈРњР•РќР¬РЁР•РќРђ Р’ РЁРР РРќРЈ */
 .btn-back {
     position: absolute;
     top: 1.5rem;
-    left: 5%;
-    background-color: #5c0707;
+    left: 4%;
+    background-color: #4c0505; /* Dark burgundy color from main page */
     color: #ffffff;
     border: none;
-    padding: 0.6rem 1.8rem;
-    font-size: 1.1rem;
-    font-weight: 600;
-    border-radius: 12px;
+    padding: 1.3rem 2rem;
+    font-size: 1.35rem; /* Large font size */
+    font-weight: 700;
+    border-radius: 18px; /* Strong corner rounding */
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
     z-index: 10;
+    width: auto;
+    min-width: 160px; /* РЈРјРµРЅСЊС€РёР»Рё РјРёРЅРёРјР°Р»СЊРЅСѓСЋ С€РёСЂРёРЅСѓ СЃ 250px РґРѕ 160px */
+    text-align: center;
 }
 
     .btn-back:hover {
-        background-color: #450a0a;
-        transform: translateX(-3px);
+        background-color: #360202;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
     }
 
-/* Темно-бордовая карточка регистрации */
+    .btn-back:active {
+        transform: translateY(0);
+    }
+
+/* Dark burgundy registration card */
 .auth-card {
     background-color: #5c0707;
     border-radius: 40px;
-    padding: 3.5rem 3rem;
+    padding: 2.5rem 4rem;
     width: 100%;
-    max-width: 500px;
+    max-width: 880px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    margin-top: 1.5rem; /* Отступ сверху, чтобы не перекрыть кнопку назад */
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    margin-top: 2rem;
 }
 
     .auth-card h2 {
-        font-size: 1.8rem;
+        font-size: 2.2rem;
         font-weight: 700;
         margin-bottom: 0.4rem;
         text-align: center;
+        letter-spacing: 0.5px;
     }
 
     .auth-card h3 {
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         font-weight: 400;
         color: rgba(255, 255, 255, 0.8);
-        margin-bottom: 2.5rem;
+        margin-bottom: 2rem;
         text-align: center;
     }
 
-/* Форма во всю ширину */
+/* Form layout */
 form {
     width: 100%;
     display: flex;
@@ -102,30 +111,30 @@ form {
     align-items: center;
 }
 
-/* Группа полей */
+/* Input rows */
 .input-group {
     display: flex;
     align-items: center;
     width: 100%;
-    margin-bottom: 1.8rem;
-    gap: 1rem;
+    margin-bottom: 1.5rem;
+    gap: 2.5rem;
 }
 
     .input-group label {
-        font-size: 1.35rem;
+        font-size: 1.4rem;
         font-weight: 600;
-        width: 90px; /* Фиксированная ширина подписи для выравнивания */
+        width: 110px;
         text-align: left;
         flex-shrink: 0;
     }
 
     .input-group input {
         flex-grow: 1;
-        height: 54px;
+        height: 50px;
         border-radius: 20px;
         border: none;
-        padding: 0 1.2rem;
-        font-size: 1.1rem;
+        padding: 0 2rem 0 1rem; /* РР·РјРµРЅРёР»Рё: Р»РµРІС‹Р№ РѕС‚СЃС‚СѓРї С‚РµРїРµСЂСЊ 1rem, С‡С‚РѕР±С‹ РїРѕРґСЃРєР°Р·РєРё РІСЃС‚Р°Р»Рё Р»РµРІРµРµ */
+        font-size: 1.2rem;
         font-family: 'Inter', sans-serif;
         color: #333333;
         background-color: #ffffff;
@@ -137,35 +146,35 @@ form {
             box-shadow: 0 0 0 4px rgba(180, 0, 0, 0.4);
         }
 
-/* Кнопка регистрации */
+/* Registration submit button */
 .btn-submit {
-    background-color: #b15d5d; /* Светлый розово-коричневый оттенок */
+    background-color: #b15d5d;
     color: #ffffff;
     border: none;
-    padding: 1.1rem 3.5rem;
-    font-size: 1.25rem;
+    padding: 1.1rem 6rem;
+    font-size: 1.35rem;
     font-weight: 700;
-    border-radius: 16px;
+    border-radius: 18px;
     cursor: pointer;
     margin-top: 1rem;
     transition: all 0.2s ease;
     width: auto;
-    min-width: 200px;
+    min-width: 320px;
 }
 
     .btn-submit:hover {
         background-color: #a04c4c;
         transform: translateY(-1px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
     }
 
-/* Оформление блока с ошибками */
+/* Error layout */
 .alert {
     width: 100%;
-    padding: 0.8rem 1rem;
-    border-radius: 12px;
+    padding: 0.8rem 1.2rem;
+    border-radius: 14px;
     margin-bottom: 1.5rem;
-    font-size: 1rem;
+    font-size: 1.05rem;
     text-align: left;
 }
 
@@ -183,11 +192,12 @@ form {
             margin-bottom: 0;
         }
 
-/* Мобильная адаптивность */
-@media (max-width: 600px) {
+/* Mobile responsive */
+@media (max-width: 900px) {
     body {
-        padding: 5rem 1.5rem 1.5rem 1.5rem;
+        padding: 6rem 1.5rem 1.5rem 1.5rem;
         justify-content: center;
+        align-items: center;
     }
 
     .btn-back {
@@ -195,21 +205,26 @@ form {
         left: 1.5rem;
         width: calc(100% - 3rem);
         text-align: center;
+        min-width: unset;
+        padding: 1rem 2rem;
+        font-size: 1.2rem;
     }
 
     body::before {
+        width: 100%;
         height: 160px;
         clip-path: polygon(0 0, 100% 0, 100% 120px, 50% 90px, 0 130px);
     }
 
     body::after {
+        width: 100%;
         height: 140px;
         clip-path: polygon(0 0, 100% 0, 100% 100px, 50% 70px, 0 110px);
     }
 
     .auth-card {
         padding: 2.5rem 1.5rem;
-        margin-top: 0;
+        margin-top: 2rem;
     }
 
     .input-group {
@@ -220,6 +235,10 @@ form {
 
         .input-group label {
             width: 100%;
+        }
+
+        .input-group input {
+            padding: 0 1.5rem 0 1rem; /* РњРѕР±РёР»СЊРЅР°СЏ Р°РґР°РїС‚Р°С†РёСЏ РѕС‚СЃС‚СѓРїРѕРІ С‚РµРєСЃС‚Р° */
         }
 
     .btn-submit {
