@@ -1,99 +1,64 @@
 % rebase('layout', title=title, year=year)
-<!-- если ваш layout-файл называется иначе (например _Layout) - поправьте имя выше -->
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Финансовые цели</title>
-    <link rel="preconnect" href="https://googleapis.com">
-    <link rel="preconnect" href="https://gstatic.com" crossorigin>
-    <link href="https://googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="static/content/goals.css">
-</head>
-<body>
-    <!-- Левая панель навигации (Сайдбар) -->
-    <aside class="sidebar">
-        <nav class="menu-top">
-            <a href="/dashboard" class="menu-item">Личный кабинет</a>
-            <a href="/incomes" class="menu-item">Доходы</a>
-            <a href="/expenses" class="menu-item">Расходы</a>
-            <a href="/goals" class="menu-item active">Цели</a>
-        </nav>
-        <a href="/logout" class="menu-item exit-btn">Выход</a>
-    </aside>
+<h2>{{title}}</h2>
 
-    <!-- Основной контент справа -->
-    <main class="main-content">
-        <!-- Блок сообщений JS -->
-        <div id="goal-form-message" style="display:none;"></div>
+<div id="goal-form-message" style="display:none;"></div>
 
-        <!-- Верхняя панель действий -->
-        <div class="action-bar">
-            <button type="button" class="btn btn-action" onclick="toggleForm()">Добавить цель</button>
-            <button type="button" class="btn btn-action">Редактировать цели</button>
-        </div>
+<form id="goal-form" class="form-inline" style="margin-bottom: 20px;">
+    <input type="hidden" id="goal-id" value="" />
 
-        <!-- Скрытая/всплывающая форма управления (динамически стилизована) -->
-        <div class="form-container" id="form-wrapper" style="display: none;">
-            <form id="goal-form">
-                <input type="hidden" id="goal-id" value="" />
-                
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="goal-name">Название</label>
-                        <input type="text" id="goal-name" placeholder="Например, Отпуск" required maxlength="100" />
-                    </div>
-                    <div class="form-group">
-                        <label for="goal-target">Цель, ₽</label>
-                        <input type="number" id="goal-target" placeholder="50000" min="0.01" step="0.01" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="goal-current">Уже накоплено, ₽</label>
-                        <input type="number" id="goal-current" placeholder="0" min="0" step="0.01" />
-                    </div>
-                    <div class="form-group">
-                        <label for="goal-deadline">Дедлайн</label>
-                        <input type="date" id="goal-deadline" />
-                    </div>
-                    <div class="form-group full-width">
-                        <label for="goal-description">Описание</label>
-                        <input type="text" id="goal-description" placeholder="Необязательно" maxlength="200" />
-                    </div>
-                </div>
+    <div class="form-group">
+        <label for="goal-name">Название</label>
+        <input type="text" id="goal-name" class="form-control" placeholder="Например, Отпуск" required maxlength="100" />
+    </div>
 
-                <div class="form-buttons">
-                    <button type="submit" class="btn btn-submit" id="goal-submit-btn">Создать цель</button>
-                    <button type="button" class="btn btn-cancel" id="goal-cancel-btn">Отмена</button>
-                </div>
-            </form>
-        </div>
+    <div class="form-group">
+        <label for="goal-target">Цель, ₽</label>
+        <input type="number" id="goal-target" class="form-control" placeholder="50000" min="0.01" step="0.01" required />
+    </div>
 
-        <!-- Контейнер для карточек прогресса целей -->
-        <div class="goals-wrapper">
-            <div class="goals-card-list" id="goals-table-body">
-                <!-- Сюда ваш JS будет вставлять карточки целей вместо строк <tr> -->
-                <div class="loading-status">Загрузка целей...</div>
-            </div>
-        </div>
-    </main>
+    <div class="form-group" id="current-amount-group">
+        <label for="goal-current">Уже накоплено, ₽</label>
+        <input type="number" id="goal-current" class="form-control" placeholder="0" min="0" step="0.01" />
+    </div>
 
-    <!-- Небольшой скрипт для открытия/закрытия формы -->
-    <script>
-        function toggleForm() {
-            var form = document.getElementById('form-wrapper');
-            form.style.display = (form.style.display === 'none') ? 'block' : 'none';
-        }
-        // Интегрируем кнопку отмены с вашей функцией resetForm
-        document.getElementById('goal-cancel-btn').addEventListener('click', function() {
-            document.getElementById('form-wrapper').style.display = 'none';
-        });
-    </script>
-</body>
-</html>
+    <div class="form-group">
+        <label for="goal-deadline">Дедлайн</label>
+        <input type="date" id="goal-deadline" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="goal-description">Описание</label>
+        <input type="text" id="goal-description" class="form-control" placeholder="Необязательно" maxlength="200" />
+    </div>
+
+    <button type="submit" class="btn btn-primary" id="goal-submit-btn">Создать цель</button>
+    <button type="button" class="btn btn-default" id="goal-cancel-btn" style="display:none;">Отмена</button>
+</form>
+
+<table class="table table-bordered" id="goals-table">
+    <thead>
+        <tr>
+            <th>Название</th>
+            <th>Накоплено</th>
+            <th>Цель</th>
+            <th>Прогресс</th>
+            <th>Дедлайн</th>
+            <th>Описание</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody id="goals-table-body">
+        <tr><td colspan="7">Загрузка...</td></tr>
+    </tbody>
+</table>
+
 <script>
 (function () {
+    // Получаем ID авторизованного юзера и его счета из Bottle шаблонизатора
+    var CURRENT_USER_ID = {{user_id}};
+    var CURRENT_CARD_ID = {{card_id}};
+
     var apiBase = '/api/goals';
 
     var tableBody = document.getElementById('goals-table-body');
@@ -102,6 +67,7 @@
     var nameField = document.getElementById('goal-name');
     var targetField = document.getElementById('goal-target');
     var currentField = document.getElementById('goal-current');
+    var currentGroup = document.getElementById('current-amount-group');
     var deadlineField = document.getElementById('goal-deadline');
     var descriptionField = document.getElementById('goal-description');
     var submitBtn = document.getElementById('goal-submit-btn');
@@ -115,7 +81,6 @@
         setTimeout(function () { messageBox.style.display = 'none'; }, 4000);
     }
 
-    // Общая обёртка над fetch для работы с JSON
     function apiRequest(url, options) {
         return fetch(url, options).then(function (res) {
             return res.text().then(function (text) {
@@ -124,7 +89,7 @@
                     data = text ? JSON.parse(text) : {};
                 } catch (e) {
                     console.error('Ответ сервера:', text);
-                    throw new Error('Сервер вернул не JSON (код ' + res.status + '). Проверь консоль и что роут /api/goals подключён в приложении.');
+                    throw new Error('Сервер вернул не JSON (код ' + res.status + ').');
                 }
                 if (!res.ok && !data.error && !data.errors) {
                     throw new Error('Ошибка сервера, код ' + res.status);
@@ -137,6 +102,7 @@
     function resetForm() {
         form.reset();
         idField.value = '';
+        currentGroup.style.display = 'inline-block';
         currentField.disabled = false;
         descriptionField.disabled = false;
         submitBtn.textContent = 'Создать цель';
@@ -146,7 +112,8 @@
     }
 
     function loadGoals() {
-        apiRequest(apiBase)
+        // Добавляем параметр user_id в GET запрос
+        apiRequest(apiBase + '?user_id=' + CURRENT_USER_ID)
             .then(function (data) {
                 if (data.error) {
                     tableBody.innerHTML = '<div class="loading-status">' + data.error + '</div>';
@@ -214,17 +181,17 @@
     }
 
     function editGoal(goal) {
-        var formWrapper = document.getElementById('form-wrapper');
-        if (formWrapper) formWrapper.style.display = 'block'; // Показываем скрытую форму при редактировании
-
         idField.value = goal.id;
         nameField.value = goal.name;
         targetField.value = goal.target_amount;
+        
         currentField.value = goal.current_amount;
-        currentField.disabled = true;
+        currentGroup.style.display = 'none'; 
+        
         deadlineField.value = goal.deadline || '';
         descriptionField.value = goal.description || '';
-        descriptionField.disabled = true;
+        descriptionField.disabled = false; 
+        
         submitBtn.textContent = 'Сохранить изменения';
         if (cancelBtn) cancelBtn.style.display = 'inline-block';
         window.scrollTo(0, form.offsetTop - 100);
@@ -232,7 +199,8 @@
 
     function deleteGoal(id) {
         if (!confirm('Удалить эту цель?')) return;
-        apiRequest(apiBase + '/' + id, { method: 'DELETE' })
+        // Передаем user_id параметром строки в DELETE
+        apiRequest(apiBase + '/' + id + '?user_id=' + CURRENT_USER_ID, { method: 'DELETE' })
             .then(function (data) {
                 if (data.error) {
                     showMessage(data.error, true);
@@ -260,7 +228,7 @@
         apiRequest(apiBase + '/' + id + '/topup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount: amount })
+            body: JSON.stringify({ amount: amount, user_id: CURRENT_USER_ID }) // Добавили user_id
         })
             .then(function (data) {
                 if (data.error) {
@@ -281,16 +249,24 @@
     form.addEventListener('submit', function (e) {
         e.preventDefault();
 
+        if (CURRENT_CARD_ID === 0) {
+            alert('У вас нет активных счетов! Сначала добавьте карту или счет.');
+            return;
+        }
+
         var id = idField.value;
 
         if (id) {
+            // Запрос на ОБНОВЛЕНИЕ (PUT)
             apiRequest(apiBase + '/' + id, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    user_id: CURRENT_USER_ID, // Передаем владельца
                     name: nameField.value,
                     target_amount: targetField.value,
-                    deadline: deadlineField.value || null
+                    deadline: deadlineField.value || null,
+                    description: descriptionField.value || null
                 })
             })
                 .then(function (data) {
@@ -307,10 +283,13 @@
                     console.error(err);
                 });
         } else {
+            // Запрос на СОЗДАНИЕ (POST)
             apiRequest(apiBase, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    user_id: CURRENT_USER_ID, // Реальный юзер
+                    id_card: CURRENT_CARD_ID, // Реальный счет
                     name: nameField.value,
                     target_amount: targetField.value,
                     current_amount: currentField.value || 0,
