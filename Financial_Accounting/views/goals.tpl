@@ -1,59 +1,97 @@
 % rebase('layout', title=title, year=year)
 <!-- если ваш layout-файл называется иначе (например _Layout) - поправьте имя выше -->
 
-<h2>{{title}}</h2>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Финансовые цели</title>
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/content/goals.css">
+</head>
+<body>
+    <!-- Левая панель навигации (Сайдбар) -->
+    <aside class="sidebar">
+        <nav class="menu-top">
+            <a href="/dashboard" class="menu-item">Личный кабинет</a>
+            <a href="/incomes" class="menu-item">Доходы</a>
+            <a href="/expenses" class="menu-item">Расходы</a>
+            <a href="/goals" class="menu-item active">Цели</a>
+        </nav>
+        <a href="/logout" class="menu-item exit-btn">Выход</a>
+    </aside>
 
-<div id="goal-form-message" style="display:none;"></div>
+    <!-- Основной контент справа -->
+    <main class="main-content">
+        <!-- Блок сообщений JS -->
+        <div id="goal-form-message" style="display:none;"></div>
 
-<form id="goal-form" class="form-inline" style="margin-bottom: 20px;">
-    <input type="hidden" id="goal-id" value="" />
+        <!-- Верхняя панель действий -->
+        <div class="action-bar">
+            <button type="button" class="btn btn-action" onclick="toggleForm()">Добавить цель</button>
+            <button type="button" class="btn btn-action">Редактировать цели</button>
+        </div>
 
-    <div class="form-group">
-        <label for="goal-name">Название</label>
-        <input type="text" id="goal-name" class="form-control" placeholder="Например, Отпуск" required maxlength="100" />
-    </div>
+        <!-- Скрытая/всплывающая форма управления (динамически стилизована) -->
+        <div class="form-container" id="form-wrapper" style="display: none;">
+            <form id="goal-form">
+                <input type="hidden" id="goal-id" value="" />
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="goal-name">Название</label>
+                        <input type="text" id="goal-name" placeholder="Например, Отпуск" required maxlength="100" />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-target">Цель, ₽</label>
+                        <input type="number" id="goal-target" placeholder="50000" min="0.01" step="0.01" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-current">Уже накоплено, ₽</label>
+                        <input type="number" id="goal-current" placeholder="0" min="0" step="0.01" />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-deadline">Дедлайн</label>
+                        <input type="date" id="goal-deadline" />
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="goal-description">Описание</label>
+                        <input type="text" id="goal-description" placeholder="Необязательно" maxlength="200" />
+                    </div>
+                </div>
 
-    <div class="form-group">
-        <label for="goal-target">Цель, ₽</label>
-        <input type="number" id="goal-target" class="form-control" placeholder="50000" min="0.01" step="0.01" required />
-    </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-submit" id="goal-submit-btn">Создать цель</button>
+                    <button type="button" class="btn btn-cancel" id="goal-cancel-btn">Отмена</button>
+                </div>
+            </form>
+        </div>
 
-    <div class="form-group">
-        <label for="goal-current">Уже накоплено, ₽</label>
-        <input type="number" id="goal-current" class="form-control" placeholder="0" min="0" step="0.01" />
-    </div>
+        <!-- Контейнер для карточек прогресса целей -->
+        <div class="goals-wrapper">
+            <div class="goals-card-list" id="goals-table-body">
+                <!-- Сюда ваш JS будет вставлять карточки целей вместо строк <tr> -->
+                <div class="loading-status">Загрузка целей...</div>
+            </div>
+        </div>
+    </main>
 
-    <div class="form-group">
-        <label for="goal-deadline">Дедлайн</label>
-        <input type="date" id="goal-deadline" class="form-control" />
-    </div>
-
-    <div class="form-group">
-        <label for="goal-description">Описание</label>
-        <input type="text" id="goal-description" class="form-control" placeholder="Необязательно" maxlength="200" />
-    </div>
-
-    <button type="submit" class="btn btn-primary" id="goal-submit-btn">Создать цель</button>
-    <button type="button" class="btn btn-default" id="goal-cancel-btn" style="display:none;">Отмена</button>
-</form>
-
-<table class="table table-bordered" id="goals-table">
-    <thead>
-        <tr>
-            <th>Название</th>
-            <th>Накоплено</th>
-            <th>Цель</th>
-            <th>Прогресс</th>
-            <th>Дедлайн</th>
-            <th>Описание</th>
-            <th>Действия</th>
-        </tr>
-    </thead>
-    <tbody id="goals-table-body">
-        <tr><td colspan="7">Загрузка...</td></tr>
-    </tbody>
-</table>
-
+    <!-- Небольшой скрипт для открытия/закрытия формы -->
+    <script>
+        function toggleForm() {
+            var form = document.getElementById('form-wrapper');
+            form.style.display = (form.style.display === 'none') ? 'block' : 'none';
+        }
+        // Интегрируем кнопку отмены с вашей функцией resetForm
+        document.getElementById('goal-cancel-btn').addEventListener('click', function() {
+            document.getElementById('form-wrapper').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
 <script>
 (function () {
     var apiBase = '/api/goals';
@@ -77,9 +115,7 @@
         setTimeout(function () { messageBox.style.display = 'none'; }, 4000);
     }
 
-    // Общая обёртка над fetch: достаёт текст ответа и аккуратно парсит JSON.
-    // Если бэкенд вернул не JSON (например, HTML-страницу 404, потому что
-    // роут не зарегистрирован) - кидает понятную ошибку вместо молчаливого падения.
+    // Общая обёртка над fetch для работы с JSON
     function apiRequest(url, options) {
         return fetch(url, options).then(function (res) {
             return res.text().then(function (text) {
@@ -104,79 +140,83 @@
         currentField.disabled = false;
         descriptionField.disabled = false;
         submitBtn.textContent = 'Создать цель';
-        cancelBtn.style.display = 'none';
+        if (cancelBtn) cancelBtn.style.display = 'none';
+        var formWrapper = document.getElementById('form-wrapper');
+        if (formWrapper) formWrapper.style.display = 'none'; // Закрываем контейнер формы
     }
 
     function loadGoals() {
         apiRequest(apiBase)
             .then(function (data) {
                 if (data.error) {
-                    tableBody.innerHTML = '<tr><td colspan="7">' + data.error + '</td></tr>';
+                    tableBody.innerHTML = '<div class="loading-status">' + data.error + '</div>';
                     return;
                 }
                 renderGoals(data.goals || []);
             })
             .catch(function (err) {
-                tableBody.innerHTML = '<tr><td colspan="7">Не удалось загрузить цели: ' + err.message + '</td></tr>';
+                tableBody.innerHTML = '<div class="loading-status">Не удалось загрузить цели: ' + err.message + '</div>';
                 console.error(err);
             });
     }
 
+    // РЕНДЕРИНГ КАРТОЧЕК: Переводит список целей из табличного формата в блочные карточки с прогресс-барами
     function renderGoals(goals) {
         if (!goals.length) {
-            tableBody.innerHTML = '<tr><td colspan="7">Пока нет целей</td></tr>';
+            tableBody.innerHTML = '<div class="loading-status">Пока нет целей</div>';
             return;
         }
 
         tableBody.innerHTML = '';
 
         goals.forEach(function (goal) {
-            var row = document.createElement('tr');
+            var item = document.createElement('div');
+            item.className = 'goal-item';
+
             var progress = goal.progress_percent || 0;
+            if (progress > 100) progress = 100; // Ограничиваем заполнение шкалы до 100%
 
-            row.innerHTML =
-                '<td>' + goal.name + '</td>' +
-                '<td>' + goal.current_amount + ' ₽</td>' +
-                '<td>' + goal.target_amount + ' ₽</td>' +
-                '<td>' +
-                    '<div class="progress" style="margin-bottom:0;">' +
-                        '<div class="progress-bar" style="width:' + progress + '%;">' + progress + '%</div>' +
+            // Генерируем адаптивную разметку для карточки с прогресс-баром
+            item.innerHTML =
+                '<div class="goal-header">' +
+                    '<div class="goal-title">' + goal.name + ' — ' + goal.current_amount + ' ₽ из ' + goal.target_amount + ' ₽</div>' +
+                    '<div class="goal-actions"></div>' + 
+                '</div>' +
+                '<div class="progress-bar-container">' +
+                    '<div class="progress-bar-fill" style="width:' + progress + '%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #4c0505; font-size: 1.1rem;">' + 
+                        (progress > 5 ? progress + '%' : '') + 
                     '</div>' +
-                '</td>' +
-                '<td>' + (goal.deadline || '-') + '</td>' +
-                '<td>' + (goal.description || '-') + '</td>' +
-                '<td></td>';
+                '</div>';
 
-            var actionsCell = row.lastElementChild;
+            var actionsContainer = item.querySelector('.goal-actions');
 
             var topupBtn = document.createElement('button');
-            topupBtn.className = 'btn btn-success btn-xs';
+            topupBtn.className = 'btn-inline btn-topup';
             topupBtn.textContent = 'Пополнить';
             topupBtn.onclick = function () { topupGoal(goal.id); };
 
             var editBtn = document.createElement('button');
-            editBtn.className = 'btn btn-default btn-xs';
+            editBtn.className = 'btn-inline btn-edit';
             editBtn.textContent = 'Изменить';
             editBtn.onclick = function () { editGoal(goal); };
 
             var deleteBtn = document.createElement('button');
-            deleteBtn.className = 'btn btn-danger btn-xs';
+            deleteBtn.className = 'btn-inline btn-delete';
             deleteBtn.textContent = 'Удалить';
             deleteBtn.onclick = function () { deleteGoal(goal.id); };
 
-            actionsCell.appendChild(topupBtn);
-            actionsCell.appendChild(document.createTextNode(' '));
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(document.createTextNode(' '));
-            actionsCell.appendChild(deleteBtn);
+            actionsContainer.appendChild(topupBtn);
+            actionsContainer.appendChild(editBtn);
+            actionsContainer.appendChild(deleteBtn);
 
-            tableBody.appendChild(row);
+            tableBody.appendChild(item);
         });
     }
 
     function editGoal(goal) {
-        // процедура update_goals меняет только name, target_amount, deadline,
-        // поэтому "накоплено" и "описание" в режиме редактирования блокируем
+        var formWrapper = document.getElementById('form-wrapper');
+        if (formWrapper) formWrapper.style.display = 'block'; // Показываем скрытую форму при редактировании
+
         idField.value = goal.id;
         nameField.value = goal.name;
         targetField.value = goal.target_amount;
@@ -186,8 +226,8 @@
         descriptionField.value = goal.description || '';
         descriptionField.disabled = true;
         submitBtn.textContent = 'Сохранить изменения';
-        cancelBtn.style.display = 'inline-block';
-        window.scrollTo(0, form.offsetTop);
+        if (cancelBtn) cancelBtn.style.display = 'inline-block';
+        window.scrollTo(0, form.offsetTop - 100);
     }
 
     function deleteGoal(id) {
@@ -208,8 +248,15 @@
     }
 
     function topupGoal(id) {
-        var amount = prompt('Сумма пополнения, ₽:');
-        if (amount === null) return;
+        var amountStr = prompt('Сумма пополнения, ₽:');
+        if (amountStr === null) return;
+        
+        var amount = parseFloat(amountStr.trim());
+        if (isNaN(amount) || amount <= 0 || !isFinite(amount)) {
+            showMessage('Пожалуйста, введите корректную сумму больше 0', true);
+            return;
+        }
+
         apiRequest(apiBase + '/' + id + '/topup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

@@ -6,107 +6,74 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #BA5555; /* Розовато-красный базовый фон */
+    background-color: #BA5555; /* Р РѕР·РѕРІР°С‚Рѕ-РєСЂР°СЃРЅС‹Р№ Р±Р°Р·РѕРІС‹Р№ С„РѕРЅ РІСЃРµР№ СЃС‚СЂР°РЅРёС†С‹ */
     color: #ffffff;
     min-height: 100vh;
     display: flex;
-    align-items: center;
-    justify-content: flex-start; /* Карточка прижата к левой стороне */
-    padding: 2rem 10%; /* Отступ слева как на макете */
+    align-items: center; /* Р¦РµРЅС‚СЂРёСЂСѓРµРј С„РѕСЂРјСѓ РїРѕ РІРµСЂС‚РёРєР°Р»Рё */
+    justify-content: flex-start; /* РљР°СЂС‚РѕС‡РєР° РїСЂРёР¶Р°С‚Р° Рє Р»РµРІРѕР№ СЃС‚РѕСЂРѕРЅРµ */
+    padding: 1.5rem 4% 3.5rem 8%;
     overflow-x: hidden;
     position: relative;
 }
 
-    /* СЛОЙ 1 (НИЖНИЙ): Темная фигура, которая работает как ТЕНЬ */
+    /* РЎР›РћР™ 1 (РќРР–РќРР™): РўРµРјРЅР°СЏ С„РёРіСѓСЂР° (РўР•РќР¬) */
     body::before {
         content: "";
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
-        height: 310px;
-        background-color: #4c0505;
-        clip-path: polygon(0 0, 100% 0, 100% 310px, 55% 150px, 45% 210px, 0 110px);
+        height: 175px;
+        background-color: #6b1111;
+        clip-path: polygon(0 0, 100% 0, 100% 175px, 55% 95px, 45% 135px, 0 65px);
         z-index: -2;
     }
 
-    /* СЛОЙ 2 (ВЕРХНИЙ): Фигура посветлее */
+    /* РЎР›РћР™ 2 (Р’Р•Р РҐРќРР™): Р¤РёРіСѓСЂР° РїРѕСЃРІРµС‚Р»РµРµ */
     body::after {
         content: "";
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
-        height: 280px;
+        height: 160px;
         background-color: #B40000;
-        clip-path: polygon(0 0, 100% 0, 100% 280px, 55% 120px, 45% 180px, 0 80px);
+        clip-path: polygon(0 0, 100% 0, 100% 160px, 55% 80px, 45% 120px, 0 50px);
         z-index: -1;
     }
 
-/* Темно-бордовая карточка авторизации */
+/* РўРµРјРЅРѕ-Р±РѕСЂРґРѕРІР°СЏ РєР°СЂС‚РѕС‡РєР° Р°РІС‚РѕСЂРёР·Р°С†РёРё вЂ” РЈРњР•РќР¬РЁРР›Р РЁРР РРќРЈ */
 .auth-card {
-    background-color: #5c0707; /* Глубокий темно-красный цвет карточки */
-    border-radius: 40px; /* Сильное скругление углов */
-    padding: 3.5rem 3rem;
+    background-color: #5c0707;
+    border-radius: 40px;
+    padding: 3rem 3rem; /* РЎР±Р°Р»Р°РЅСЃРёСЂРѕРІР°Р»Рё РІРЅСѓС‚СЂРµРЅРЅРёРµ РѕС‚СЃС‚СѓРїС‹ РїРѕРґ РЅРѕРІСѓСЋ С€РёСЂРёРЅСѓ */
     width: 100%;
-    max-width: 500px;
+    max-width: 520px; /* РЎСѓР·РёР»Рё С„РѕСЂРјСѓ СЃ 680px РґРѕ 520px РґР»СЏ РёРґРµР°Р»СЊРЅРѕРіРѕ Р±Р°Р»Р°РЅСЃР° */
     display: flex;
     flex-direction: column;
     align-items: center;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    margin-top: 1.5rem;
 }
 
     .auth-card h2 {
-        font-size: 1.8rem;
+        font-size: 2.2rem;
         font-weight: 700;
-        margin-bottom: 0.4rem;
+        margin-bottom: 0.5rem;
         text-align: center;
+        letter-spacing: 0.5px;
     }
 
     .auth-card h3 {
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         font-weight: 400;
-        color: rgba(255, 255, 255, 0.8);
-        margin-bottom: 2.5rem;
+        color: rgba(255, 255, 255, 0.75);
+        margin-bottom: 3rem;
         text-align: center;
     }
 
-/* Группа полей: Подпись слева, инпут справа */
-.input-group {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    margin-bottom: 2rem;
-    gap: 1rem;
-}
-
-    .input-group label {
-        font-size: 1.35rem;
-        font-weight: 600;
-        width: 90px; /* Фиксированная ширина подписи для выравнивания */
-        text-align: left;
-        flex-shrink: 0;
-    }
-
-    .input-group input {
-        flex-grow: 1;
-        height: 54px;
-        border-radius: 20px; /* Закругленные края у белых полей */
-        border: none;
-        padding: 0 1.2rem;
-        font-size: 1.1rem;
-        font-family: 'Inter', sans-serif;
-        color: #333333;
-        background-color: #ffffff;
-        outline: none;
-        transition: box-shadow 0.2s ease;
-    }
-
-        .input-group input:focus {
-            box-shadow: 0 0 0 4px rgba(180, 0, 0, 0.4);
-        }
-
-/* Форма растягивается на всю карточку */
+/* Р¤РѕСЂРјР° СЂР°СЃС‚СЏРіРёРІР°РµС‚СЃСЏ РЅР° РІСЃСЋ РєР°СЂС‚РѕС‡РєСѓ */
 form {
     width: 100%;
     display: flex;
@@ -114,35 +81,70 @@ form {
     align-items: center;
 }
 
-/* Кнопка Войти */
+/* Р“СЂСѓРїРїР° РїРѕР»РµР№: РџРѕРґРїРёСЃСЊ СЃР»РµРІР°, РёРЅРїСѓС‚ СЃРїСЂР°РІР° */
+.input-group {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 1.8rem;
+    gap: 2rem; /* РЎР»РµРіРєР° СѓРјРµРЅСЊС€РёР»Рё Р·Р°Р·РѕСЂ, С‡С‚РѕР±С‹ РёРЅРїСѓС‚С‹ РѕСЃС‚Р°РІР°Р»РёСЃСЊ РїСЂРѕСЃС‚РѕСЂРЅС‹РјРё */
+}
+
+    .input-group label {
+        font-size: 1.4rem;
+        font-weight: 600;
+        width: 90px; /* РЎРґРµР»Р°Р»Рё С€РёСЂРёРЅСѓ РїРѕРґРїРёСЃРё 90px, С‡С‚РѕР±С‹ РґР°С‚СЊ Р±РѕР»СЊС€Рµ РјРµСЃС‚Р° РїРѕР»СЏРј РІРІРѕРґР° */
+        text-align: left;
+        flex-shrink: 0;
+    }
+
+    .input-group input {
+        flex-grow: 1;
+        height: 52px;
+        border-radius: 20px;
+        border: none;
+        padding: 0 2rem 0 1.2rem;
+        font-size: 1.2rem;
+        font-family: 'Inter', sans-serif;
+        color: #333333;
+        background-color: #ffffff;
+        outline: none;
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+        .input-group input:focus {
+            box-shadow: 0 0 0 4px rgba(180, 0, 0, 0.4);
+        }
+
+/* РљРЅРѕРїРєР° Р’РѕР№С‚Рё */
 .btn-submit {
-    background-color: #b15d5d; /* Светло-коричневый/розовый оттенок с макета */
+    background-color: #b15d5d;
     color: #ffffff;
     border: none;
-    padding: 1rem 3.5rem;
-    font-size: 1.2rem;
-    font-weight: 600;
-    border-radius: 16px;
+    padding: 1.2rem 4rem; /* РЎРґРµР»Р°Р»Рё РєРЅРѕРїРєСѓ С‡СѓС‚СЊ РєРѕРјРїР°РєС‚РЅРµРµ РїРѕ Р±РѕРєР°Рј */
+    font-size: 1.35rem;
+    font-weight: 700;
+    border-radius: 18px;
     cursor: pointer;
-    margin-top: 1rem;
-    margin-bottom: 1.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.8rem;
     transition: all 0.2s ease;
     width: auto;
-    min-width: 180px;
+    min-width: 260px; /* РџРѕРґСЃС‚СЂРѕРёР»Рё РјРёРЅРёРјР°Р»СЊРЅСѓСЋ С€РёСЂРёРЅСѓ РїРѕРґ СЂР°Р·РјРµСЂ С„РѕСЂРјС‹ */
 }
 
     .btn-submit:hover {
         background-color: #a04c4c;
         transform: translateY(-1px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
     }
 
-/* Текстовая кнопка "Нет аккаунта?" */
+/* РўРµРєСЃС‚РѕРІР°СЏ РєРЅРѕРїРєР° "РќРµС‚ Р°РєРєР°СѓРЅС‚Р°?" */
 .btn-link {
     background: none;
     border: none;
     color: rgba(255, 255, 255, 0.8);
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     cursor: pointer;
     text-decoration: none;
     font-family: 'Inter', sans-serif;
@@ -153,13 +155,13 @@ form {
         color: #ffffff;
     }
 
-/* Стили для системных уведомлений (ошибки/успех) */
+/* РЎС‚РёР»Рё РґР»СЏ СЃРёСЃС‚РµРјРЅС‹С… СѓРІРµРґРѕРјР»РµРЅРёР№ */
 .alert {
     width: 100%;
-    padding: 0.8rem 1rem;
-    border-radius: 12px;
+    padding: 0.8rem 1.2rem;
+    border-radius: 14px;
     margin-bottom: 1.5rem;
-    font-size: 1rem;
+    font-size: 1.05rem;
     text-align: center;
 }
 
@@ -175,25 +177,27 @@ form {
     color: #86efac;
 }
 
-/* Адаптивность для мобильных телефонов */
-@media (max-width: 600px) {
+/* РђРґР°РїС‚РёРІРЅРѕСЃС‚СЊ РґР»СЏ РјРѕР±РёР»СЊРЅС‹С… С‚РµР»РµС„РѕРЅРѕРІ */
+@media (max-width: 900px) {
     body {
-        padding: 1.5rem;
-        justify-content: center; /* Центрируем форму на мобильных экранах */
+        padding: 6rem 1.5rem 1.5rem 1.5rem;
+        justify-content: center;
+        align-items: center;
     }
 
         body::before {
-            height: 160px;
-            clip-path: polygon(0 0, 100% 0, 100% 120px, 50% 90px, 0 130px);
+            height: 120px;
+            clip-path: polygon(0 0, 100% 0, 100% 95px, 50% 65px, 0 85px);
         }
 
         body::after {
-            height: 140px;
-            clip-path: polygon(0 0, 100% 0, 100% 100px, 50% 70px, 0 110px);
+            height: 100px;
+            clip-path: polygon(0 0, 100% 0, 100% 80px, 50% 50px, 0 70px);
         }
 
     .auth-card {
         padding: 2.5rem 1.5rem;
+        margin-top: 2rem;
     }
 
     .input-group {
@@ -204,6 +208,10 @@ form {
 
         .input-group label {
             width: 100%;
+        }
+
+        .input-group input {
+            padding: 0 1.5rem 0 1rem;
         }
 
     .btn-submit {
