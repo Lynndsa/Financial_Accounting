@@ -113,7 +113,7 @@ def get_goal(goal_id):
 
 @route('/api/goals', method='POST')
 def create_goal():
-    """Создание новой цели."""
+    """Создание новой цели с вызовом процедуры create_new_goal (строго 7 параметров)."""
     data = _get_request_data()
     id_user = data.get('user_id')
     id_card = data.get('id_card')
@@ -139,6 +139,7 @@ def create_goal():
                 response.status = 400
                 return {'error': 'Указанный счет не найден или не принадлежит пользователю'}
 
+            # Передаем строго 7 параметров в соответствии с PROCEDURE create_new_goal
             cursor.callproc('create_new_goal', (
                 int(id_user),
                 cleaned['name'],
@@ -163,7 +164,7 @@ def create_goal():
 
 @route('/api/goals/<goal_id:int>', method='PUT')
 def update_goal(goal_id):
-    """Обновление цели."""
+    """Обновление метаданных цели через процедуру update_goals."""
     data = _get_request_data()
     id_user = data.get('user_id')
 
@@ -232,7 +233,7 @@ def update_goal(goal_id):
 
 @route('/api/goals/<goal_id:int>', method='DELETE')
 def delete_goal(goal_id):
-    """Удаление цели."""
+    """Удаление цели через процедуру delete_goals."""
     id_user = request.query.get('user_id')
     id_err = validate_id(id_user, 'user_id') or validate_id(goal_id, 'id')
     if id_err:
@@ -259,7 +260,10 @@ def delete_goal(goal_id):
 
 @route('/api/goals/<goal_id:int>/topup', method='POST')
 def topup_goal(goal_id):
-    """Пополнение копилки."""
+    """
+    Пополнение копилки делегировано триггерам БД.
+    Бэкенд только валидирует баланс и инкрементирует текущую сумму цели.
+    """
     data = _get_request_data()
     id_user = data.get('user_id')
     amount = data.get('amount')
@@ -274,28 +278,58 @@ def topup_goal(goal_id):
         response.status = 400
         return {'error': amount_err}
 
+    topup_sum = float(amount)
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
+            # 1. Получаем текущие данные о цели
             cursor.execute(
-                'SELECT current_amount, target_amount FROM goals WHERE id = %s AND id_user = %s',
+                'SELECT current_amount, target_amount, id_card, is_active FROM goals WHERE id = %s AND id_user = %s',
                 (goal_id, id_user)
             )
-            row = cursor.fetchone()
-            if not row:
+            goal_row = cursor.fetchone()
+            if not goal_row:
                 response.status = 404
                 return {'error': 'Цель не найдена'}
 
-            new_amount = float(row['current_amount']) + float(amount)
+            if not goal_row['is_active']:
+                response.status = 400
+                return {'error': 'Эта цель уже закрыта или заархивирована'}
+
+            id_card = goal_row['id_card']
+            if not id_card:
+                response.status = 400
+                return {'error': 'К этой цели не привязан счет для списания'}
+
+            # 2. Проверяем баланс карты на бэкенде
+            cursor.execute('SELECT balance FROM accounts WHERE id_card = %s', (id_card,))
+            account_row = cursor.fetchone()
+            if not account_row:
+                response.status = 400
+                return {'error': 'Привязанный к цели счет не найден'}
+
+            if float(account_row['balance']) < topup_sum:
+                response.status = 400
+                return {'error': f"На счете недостаточно средств. Баланс: {account_row['balance']} ₽"}
+
+            # 3. ОБНОВЛЕНИЕ СУММЫ ЦЕЛИ
+            # Триггер goals_AFTER_UPDATE перехватит это изменение, посчитает v_diff и добавит системный расход.
+            new_amount = float(goal_row['current_amount']) + topup_sum
+            target_amount = float(goal_row['target_amount'])
+            
+            is_completed = new_amount >= target_amount
+            new_active_status = 0 if is_completed else 1
+
             cursor.execute(
-                'UPDATE goals SET current_amount = %s WHERE id = %s',
-                (new_amount, goal_id)
+                'UPDATE goals SET current_amount = %s, is_active = %s WHERE id = %s',
+                (new_amount, new_active_status, goal_id)
             )
+
         conn.commit()
         return {
-            'message': 'Копилка пополнена',
+            'message': 'Копилка успешно пополнена, изменения обработаны триггером БД!',
             'current_amount': new_amount,
-            'is_completed': new_amount >= float(row['target_amount']),
+            'is_completed': is_completed,
         }
     except Exception as e:
         conn.rollback()

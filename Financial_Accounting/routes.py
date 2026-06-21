@@ -4,7 +4,7 @@ from urllib.parse import unquote
 
 from files_module.auth import register_user
 from files_module.auth import login_user
-from files_module import goals, income
+from files_module import goals, income, expenses
 from database.db import get_connection
 
 from validations.auth_validation import validate_registration
@@ -151,7 +151,7 @@ def income_page():
     # 3. Передаем всё это напрямую в шаблон tpl
     return template(
         'income.tpl',
-        title='Доходы',
+        title='Поступления',
         year=datetime.now().year,
         user_id=user_id,
         card_id=card_id
@@ -160,7 +160,45 @@ def income_page():
 
 @route('/expenses')
 def expenses_page():
-    return template('expenses.tpl', title='Расходы', year=datetime.now().year)
+    # 1. Получаем имя пользователя из куки авторизации
+    username = unquote(request.get_cookie('username') or '')
+    if not username:
+        return redirect('/login_page')
+
+    user_id = None
+    card_id = None
+
+    # 2. Идём в БД, чтобы узнать id_user и его id_card
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute('SELECT id_user FROM user WHERE username = %s', (username,))
+            user_row = cursor.fetchone()
+            if user_row:
+                user_id = user_row['id_user']
+                
+                # Ищем любой доступный счёт (карту) этого пользователя в таблице accounts
+                cursor.execute('SELECT id_card FROM accounts WHERE id_user = %s LIMIT 1', (user_id,))
+                card_row = cursor.fetchone()
+                if card_row:
+                    card_id = card_row['id_card']
+    except Exception as e:
+        print(f"Ошибка при получении данных сессии для расходов: {e}")
+    finally:
+        conn.close()
+
+    # Если у пользователя ещё нет счетов, подставим заглушку, чтобы не падало
+    if not card_id:
+        card_id = 0 
+
+    # 3. Передаем данные в шаблон tpl расходов
+    return template(
+        'expenses.tpl',
+        title='Расходы',
+        year=datetime.now().year,
+        user_id=user_id,
+        card_id=card_id
+    )
 
 
 @route('/goals')

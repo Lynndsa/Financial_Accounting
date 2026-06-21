@@ -3,7 +3,6 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>{{title}} — Копилка</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -111,7 +110,7 @@
                     <input type="date" id="incomeDate" class="form-control">
                     <small style="color: #7f8c8d; display: block; margin-top: 4px;">По умолчанию будет выбран сегодняшний день</small>
                 </div>
-                <button type="submit">Сохранить операцию</button>
+                <button type="submit">Сохранить поступление</button>
             </form>
             
             <br>
@@ -126,7 +125,6 @@
         </div>
 
         <div class="card" style="text-align: center;">
-            <h2>Визуализация доходов</h2>
             <div class="form-group" style="max-width: 150px; margin: 0 auto 15px;">
                 <input type="month" id="filterMonth" class="form-control">
             </div>
@@ -158,6 +156,7 @@
                     <th>Категория</th>
                     <th>Счёт</th>
                     <th>Сумма</th>
+                    <th>Действия</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -261,22 +260,69 @@
             tbody.innerHTML = '';
             
             if (!data.history || data.history.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#7f8c8d;">Нет операций</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#7f8c8d;">Нет операций</td></tr>';
                 return;
             }
             
             data.history.forEach(item => {
                 const formattedDate = new Date(item.date_time).toLocaleDateString('ru-RU');
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${formattedDate}</td>
-                        <td>${item.category_name}</td>
-                        <td>${item.name_card || 'Основной счёт'}</td>
-                        <td style="color:#2ecc71; font-weight:bold;">+ ${item.sum.toFixed(2)} ₽</td>
-                    </tr>
+                
+                // Создаем строку таблицы вручную, чтобы безопасно повесить событие клика на кнопку удаления
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td>${item.category_name}</td>
+                    <td>${item.name_card || 'Основной счёт'}</td>
+                    <td style="color:#2ecc71; font-weight:bold;">+ ${item.sum.toFixed(2)} ₽</td>
+                    <td></td>
                 `;
+                
+                // Создаем кнопку «Удалить»
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.textContent = 'Удалить';
+                // Применяем простые стили, чтобы кнопка выделялась, или задай свой класс (например, btn-danger)
+                deleteBtn.style.backgroundColor = '#e74c3c';
+                deleteBtn.style.color = 'white';
+                deleteBtn.style.border = 'none';
+                deleteBtn.style.padding = '3px 8px';
+                deleteBtn.style.borderRadius = '4px';
+                deleteBtn.style.cursor = 'pointer';
+                deleteBtn.style.width = 'auto';
+                
+                // Навешиваем событие клика на функцию удаления
+                deleteBtn.addEventListener('click', () => deleteIncome(item.id_income));
+                
+                // Добавляем созданную кнопку в последнюю ячейку строки
+                row.lastElementChild.appendChild(deleteBtn);
+                tbody.appendChild(row);
             });
         } catch (err) { console.error(err); }
+    }
+
+    // НОВАЯ ФУНКЦИЯ: Удаление конкретной записи дохода
+    async function deleteIncome(incomeId) {
+        if (!confirm('Вы уверены, что хотите удалить эту операцию дохода?')) return;
+        
+        try {
+            const res = await fetch(`/api/incomes/${incomeId}?user_id=${CURRENT_USER_ID}`, {
+                method: 'DELETE'
+            });
+            
+            if (res.ok) {
+                alert('Операция успешно удалена!');
+                // Обновляем аналитику на экране и перерисовываем историю транзакций
+                await loadChartData();
+                await loadHistory();
+            } else {
+                const errData = await res.json();
+                alert('Не удалось удалить: ' + (errData.error || 'Ошибка сервера'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Произошла ошибка при отправке запроса на удаление.');
+        }
     }
 
     document.getElementById('addIncomeForm').addEventListener('submit', async (e) => {
