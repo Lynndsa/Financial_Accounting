@@ -9,7 +9,7 @@ def get_connection():
         database='a1279252_financy',
         charset='utf8mb4',
         cursorclass=pymysql.cursors.DictCursor,
-        connect_timeout=5,
+        connect_timeout=20,
         autocommit=False,
         use_unicode=True
     )

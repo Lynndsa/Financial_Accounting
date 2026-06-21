@@ -19,7 +19,7 @@
     <Name>Financial_Accounting</Name>
     <RootNamespace>Financial_Accounting</RootNamespace>
     <InterpreterId>MSBuild|env3|$(MSBuildProjectFullPath)</InterpreterId>
-    <InterpreterId>MSBuild|env5|$(MSBuildProjectFullPath)</InterpreterId>
+    <InterpreterId>MSBuild|env2|$(MSBuildProjectFullPath)</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -60,6 +60,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="validations\incomes_validation.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="validations\personal_account_validation.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
