@@ -55,11 +55,18 @@ def login():
                         p.surname,
                         p.datebirth,
                         p.email,
-                        u.username
+                        u.username,
+                        a.name_card,
+                        a.balance,
+                        c.name AS currency_name
                     FROM profiles p
                     JOIN user u
                         ON p.id_user = u.id_user
-                    WHERE u.username=%s
+                    LEFT JOIN accounts a
+                        ON u.id_user = a.id_user
+                    LEFT JOIN currencies c
+                        ON a.id_currencies = c.id_currencies
+                    WHERE u.username = %s
                 """, (username,))
 
                 user_data = cursor.fetchone()

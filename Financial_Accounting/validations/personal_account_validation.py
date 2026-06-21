@@ -4,7 +4,7 @@ from datetime import datetime
 fio_pattern = r'^[А-Яа-яЁёA-Za-z]{3,40}$'
 card_name_pattern = r'^[А-Яа-яЁёA-Za-z0-9 ]{5,50}$'
 
-def validate_personal_account(name, lastname, surname, datebirth):
+def validate_personal_account(name, lastname, surname, datebirth, name_card):
 
     errors = {}
 
@@ -29,7 +29,17 @@ def validate_personal_account(name, lastname, surname, datebirth):
                 "(от 3 до 40 символов)"
             )
 
+    if name_card:
+        if not re.match(card_name_pattern, name_card):
+            errors["name_card"] = (
+                "Название счета должно содержать только буквы, цифры и пробелы"
+                "(от 5 до 50 символов)"
+            )
 
+        elif not name_card.strip():
+            errors["name_card"] = (
+                "Название счета не может состоять только из пробелов"
+            )
 
     if datebirth:
         try:
