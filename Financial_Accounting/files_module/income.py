@@ -178,3 +178,43 @@ def get_incomes_chart_data():
         return {'error': 'Ошибка при формировании данных диаграммы', 'detail': str(e)}
     finally:
         conn.close()
+
+
+# Исправлено: функция вынесена из тела предыдущей функции (убраны лишние пробелы слева)
+@route('/api/incomes/<income_id:int>', method='DELETE')
+def delete_income(income_id):
+    """Удаление операции дохода конкретного пользователя."""
+    id_user = request.query.get('user_id')
+
+    # Валидация ID
+    id_err = validate_id(id_user, 'user_id') or validate_id(income_id, 'id')
+    if id_err:
+        response.status = 400
+        return {'error': id_err}
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Исправлено: очищены скрытые символы неразрывных пробелов в SQL-запросе
+            cursor.execute('''
+                SELECT i.id_income 
+                FROM incomes i
+                JOIN accounts a ON i.id_card = a.id_card
+                WHERE i.id_income = %s AND a.id_user = %s
+            ''', (income_id, id_user))
+        
+            if not cursor.fetchone():
+                response.status = 404
+                return {'error': 'Доход не найден или доступ ограничен'}
+
+            # Если проверка на владельца пройдена, удаляем
+            cursor.execute('DELETE FROM incomes WHERE id_income = %s', (income_id,))
+        
+        conn.commit()
+        return {'message': 'Операция успешно удалена!'}
+    except Exception as e:
+        conn.rollback()
+        response.status = 500
+        return {'error': 'Ошибка при удалении дохода', 'detail': str(e)}
+    finally:
+        conn.close()
