@@ -17,7 +17,6 @@ body {
     position: relative;
 }
 
-    /* СЛОЙ 1 (НИЖНИЙ): Темная фигура (ТЕНЬ) */
     body::before {
         content: "";
         position: absolute;

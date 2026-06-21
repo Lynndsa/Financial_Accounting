@@ -1,24 +1,106 @@
-body {
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 
-/* Set padding to keep content from hitting the edges */
-.body-content {
-    padding-left: 15px;
-    padding-right: 15px;
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #BA5555; /* Базовый розовато-красный фон всей страницы */
+    color: #ffffff;
+    min-height: 100vh;
+    display: flex; /* Выстраивает сайдбар и контент в один ряд */
+    overflow-x: hidden;
+    position: relative;
+    width: 100%;
 }
 
-/* Set width on the form input elements since they're 100% wide by default */
+/* ЛЕВАЯ ПАНЕЛЬ: Всегда одного фиксированного нормального размера, не прыгает */
+.sidebar {
+    width: 240px; /* Постоянный фиксированный крупный размер */
+    background-color: #4c0505; /* Глубокий темно-бордовый цвет */
+    height: 100vh;
+    position: fixed; /* Панель зафиксирована на месте при скролле */
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3rem 0;
+    flex-shrink: 0; /* Запрещает сайдбару сжиматься при наплыве контента */
+    z-index: 100;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.25);
+}
+
+.menu-top {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Зазор между кнопками */
+    width: 100%;
+}
+
+/* Текстовые элементы меню (Крупные и солидные) */
+.menu-item {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 1.25rem; /* Нормальный крупный шрифт */
+    font-weight: 600;
+    padding: 0.8rem 2.5rem; /* Внутренние отступы, чтобы текст не прижимался к краям */
+    display: block;
+    transition: all 0.2s ease;
+}
+
+    .menu-item:hover, .menu-item.active {
+        color: #ffffff !important;
+        font-weight: 700;
+        background-color: rgba(255, 255, 255, 0.05); /* Легкая подсветка при наведении */
+    }
+
+.logout-container {
+    width: 100%;
+}
+
+/* Кнопка Выход в самом низу */
+.btn-logout-sidebar {
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding: 0.8rem 2.5rem;
+    display: block;
+    transition: all 0.2s ease;
+}
+
+    .btn-logout-sidebar:hover {
+        color: #ef4444 !important; /* Краснеет при наведении */
+        background-color: rgba(239, 68, 68, 0.05);
+    }
+
+/* ОСНОВНОЙ КОНТЕНТ: Сдвинут вправо ровно на ширину фиксированного сайдбара */
+.body-content, .main-content {
+    flex: 1;
+    margin-left: 240px; /* Четкий отступ под ширину панели */
+    padding: 4rem 3rem 4rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+    z-index: 1;
+    align-self: stretch;
+    width: calc(100% - 240px);
+}
+
+/* Ограничения Bootstrap для инпутов убраны, чтобы они слушались новые стили */
 input,
 select,
 textarea {
-    max-width: 280px;
+    max-width: 100%;
 }
 
-/* styles for validation helpers */
+/* Стили валидации */
 .field-validation-error {
-    color: #b94a48;
+    color: #fca5a5;
+    font-size: 0.95rem;
+    margin-top: 0.4rem;
 }
 
 .field-validation-valid {
@@ -26,58 +108,16 @@ textarea {
 }
 
 input.input-validation-error {
-    border: 1px solid #b94a48;
-}
-
-input[type="checkbox"].input-validation-error {
-    border: 0 none;
+    border: 2px solid #ef4444 !important;
 }
 
 .validation-summary-errors {
-    color: #b94a48;
+    color: #fca5a5;
+    background-color: rgba(239, 68, 68, 0.15);
+    padding: 1rem;
+    border-radius: 12px;
 }
 
 .validation-summary-valid {
     display: none;
-}
-
-.sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 90px;
-    height: 100vh;
-    background-color: #222;
-    color: white;
-    display: flex;
-    font-size:24px;
-    flex-direction: column;
-}
-
-    .sidebar h3 {
-        text-align: center;
-        padding: 20px 0;
-        margin: 0;
-    }
-
-    .sidebar .nav {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        flex-grow: 1; /* занимает всё свободное место */
-    }
-
-        .sidebar .nav li a {
-            display: block;
-            padding: 15px 20px;
-            color: white;
-            text-decoration: none;
-        }
-
-            .sidebar .nav li a:hover {
-                background-color: #333;
-            }
-
-.logout {
-    padding: 5px;
 }
