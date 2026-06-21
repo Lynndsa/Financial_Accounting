@@ -3,7 +3,6 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>{{title}} — Копилка</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -111,7 +110,7 @@
                     <input type="date" id="incomeDate" class="form-control">
                     <small style="color: #7f8c8d; display: block; margin-top: 4px;">По умолчанию будет выбран сегодняшний день</small>
                 </div>
-                <button type="submit">Сохранить операцию</button>
+                <button type="submit">Сохранить поступление</button>
             </form>
             
             <br>
@@ -126,7 +125,6 @@
         </div>
 
         <div class="card" style="text-align: center;">
-            <h2>Визуализация доходов</h2>
             <div class="form-group" style="max-width: 150px; margin: 0 auto 15px;">
                 <input type="month" id="filterMonth" class="form-control">
             </div>

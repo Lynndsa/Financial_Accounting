@@ -124,7 +124,6 @@
         </div>
 
         <div class="card" style="text-align: center;">
-            <h2>Визуализация расходов</h2>
             <div class="form-group" style="max-width: 150px; margin: 0 auto 15px;">
                 <input type="month" id="filterMonth" class="form-control">
             </div>

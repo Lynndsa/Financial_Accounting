@@ -151,7 +151,7 @@ def income_page():
     # 3. Передаем всё это напрямую в шаблон tpl
     return template(
         'income.tpl',
-        title='Доходы',
+        title='Поступления',
         year=datetime.now().year,
         user_id=user_id,
         card_id=card_id
