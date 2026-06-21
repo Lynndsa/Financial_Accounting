@@ -1,6 +1,7 @@
-from bottle import route, request, response
+from bottle import route, request, response, redirect, template
 from datetime import date, datetime
 from decimal import Decimal
+from urllib.parse import unquote
 
 from database.db import get_connection
 from validations.incomes_validation import (
@@ -92,6 +93,7 @@ def add_income():
                 response.status = 400
                 return {'error': 'Указанный счёт не найден или не принадлежит пользователю'}
 
+            # Триггер incomes_AFTER_INSERT автоматически обновит баланс в accounts
             cursor.callproc('create_new_income', (
                 cleaned['id_category'],
                 cleaned['id_card'],
@@ -99,16 +101,14 @@ def add_income():
                 cleaned['sum']
             ))
             
-            cursor.execute(
-                'UPDATE accounts SET balance = balance + %s WHERE id_card = %s',
-                (cleaned['sum'], cleaned['id_card'])
-            )
         conn.commit()
         response.status = 201
         return {'message': 'Доход успешно зафиксирован'}
     except Exception as e:
         conn.rollback()
         response.status = 500
+        import traceback
+        print(traceback.format_exc())
         return {'error': 'Ошибка при создании операции дохода', 'detail': str(e)}
     finally:
         conn.close()
@@ -180,13 +180,11 @@ def get_incomes_chart_data():
         conn.close()
 
 
-# Исправлено: функция вынесена из тела предыдущей функции (убраны лишние пробелы слева)
 @route('/api/incomes/<income_id:int>', method='DELETE')
 def delete_income(income_id):
-    """Удаление операции дохода конкретного пользователя."""
+    """Удаление операции дохода. Корректировка баланса происходит автоматически в СУБД."""
     id_user = request.query.get('user_id')
 
-    # Валидация ID
     id_err = validate_id(id_user, 'user_id') or validate_id(income_id, 'id')
     if id_err:
         response.status = 400
@@ -195,26 +193,67 @@ def delete_income(income_id):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # Исправлено: очищены скрытые символы неразрывных пробелов в SQL-запросе
+            # Проверяем, принадлежит ли доход пользователю
             cursor.execute('''
                 SELECT i.id_income 
                 FROM incomes i
                 JOIN accounts a ON i.id_card = a.id_card
                 WHERE i.id_income = %s AND a.id_user = %s
             ''', (income_id, id_user))
-        
+            
             if not cursor.fetchone():
                 response.status = 404
                 return {'error': 'Доход не найден или доступ ограничен'}
 
-            # Если проверка на владельца пройдена, удаляем
+            # Триггер incomes_AFTER_DELETE автоматически вычтет сумму из accounts
             cursor.execute('DELETE FROM incomes WHERE id_income = %s', (income_id,))
         
         conn.commit()
         return {'message': 'Операция успешно удалена!'}
+        
     except Exception as e:
         conn.rollback()
         response.status = 500
+        import traceback
+        print(traceback.format_exc())
         return {'error': 'Ошибка при удалении дохода', 'detail': str(e)}
     finally:
         conn.close()
+
+
+@route('/income')
+def income_page():
+    username = unquote(request.get_cookie('username') or '')
+    if not username:
+        return redirect('/login_page')
+
+    user_id = None
+    card_id = None
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute('SELECT id_user FROM user WHERE username = %s', (username,))
+            user_row = cursor.fetchone()
+            if user_row:
+                user_id = user_row['id_user']
+                
+                cursor.execute('SELECT id_card FROM accounts WHERE id_user = %s LIMIT 1', (user_id,))
+                card_row = cursor.fetchone()
+                if card_row:
+                    card_id = card_row['id_card']
+    except Exception as e:
+        print(f"Ошибка при получении данных сессии: {e}")
+    finally:
+        conn.close()
+
+    if not card_id:
+        card_id = 0 
+
+    return template(
+        'income.tpl',
+        title='Поступления',
+        year=datetime.now().year,
+        user_id=user_id,
+        card_id=card_id
+    )

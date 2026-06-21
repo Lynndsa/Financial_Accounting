@@ -63,7 +63,7 @@ def create_expense_category():
                 response.status = 400
                 return {'error': 'Категория расходов с таким названием уже существует'}
 
-            # Вызов твоей хранимой процедуры
+            # Вызов хранимой процедуры
             cursor.callproc('create_new_expense_category', (name_clean,))
         conn.commit()
         response.status = 201
@@ -102,7 +102,13 @@ def add_expense():
                 response.status = 400
                 return {'error': 'Указанный счёт не найден или не принадлежит пользователю'}
 
-            # Вызов твоей процедуры создания расхода
+            # Валидация остатка: проверяем, хватает ли денег на счете перед покупкой
+            if float(account['balance']) < cleaned['sum']:
+                response.status = 400
+                return {'error': f"Недостаточно средств. Текущий баланс: {account['balance']} ₽"}
+
+            # Вызов хранимой процедуры создания расхода.
+            # Триггер expenses_AFTER_INSERT в БД сам уменьшит баланс счета!
             cursor.callproc('create_new_expenses', (
                 cleaned['id_category'],
                 cleaned['id_card'],
@@ -110,17 +116,14 @@ def add_expense():
                 cleaned['sum']
             ))
             
-            # Уменьшаем баланс карты (так как это расход)
-            cursor.execute(
-                'UPDATE accounts SET balance = balance - %s WHERE id_card = %s',
-                (cleaned['sum'], cleaned['id_card'])
-            )
         conn.commit()
         response.status = 201
         return {'message': 'Расход успешно зафиксирован'}
     except Exception as e:
         conn.rollback()
         response.status = 500
+        import traceback
+        print(traceback.format_exc())
         return {'error': 'Ошибка при создании операции расхода', 'detail': str(e)}
     finally:
         conn.close()
@@ -132,6 +135,7 @@ def get_expenses_history():
     selected_month = request.query.get('month') or date.today().strftime('%Y-%m')
     id_category = request.query.get('id_category') or 'all'
 
+    # ИСПРАВЛЕНО: Изменен 'i.id_card' на 'e.id_card' во втором JOIN
     query = """
         SELECT e.id_expense, e.sum, e.date_time, c.name AS category_name, a.name_card
         FROM expenses e
@@ -156,6 +160,8 @@ def get_expenses_history():
         return {'history': [_serialize_row(r) for r in rows]}
     except Exception as e:
         response.status = 500
+        import traceback
+        print(traceback.format_exc())  # Логируем точную ошибку в консоль
         return {'error': 'Ошибка при получении истории расходов', 'detail': str(e)}
     finally:
         conn.close()
@@ -194,7 +200,7 @@ def get_expenses_chart_data():
 
 @route('/api/expenses/<expense_id:int>', method='DELETE')
 def delete_expense(expense_id):
-    """Удаление операции расхода конкретного пользователя с возвратом баланса."""
+    """Удаление операции расхода конкретного пользователя. Возврат баланса автоматизирован триггером."""
     id_user = request.query.get('user_id')
 
     id_err = validate_id(id_user, 'user_id') or validate_id(expense_id, 'id')
@@ -207,31 +213,26 @@ def delete_expense(expense_id):
         with conn.cursor() as cursor:
             # Проверяем владельца транзакции
             cursor.execute('''
-                SELECT e.id_expense, e.sum, e.id_card 
+                SELECT e.id_expense
                 FROM expenses e
                 JOIN accounts a ON e.id_card = a.id_card
                 WHERE e.id_expense = %s AND a.id_user = %s
             ''', (expense_id, id_user))
-            expense = cursor.fetchone()
-        
-            if not expense:
+            
+            if not cursor.fetchone():
                 response.status = 404
                 return {'error': 'Расход не найден или доступ ограничен'}
 
-            # Вызываем твою процедуру удаления расхода
+            # Вызываем хранимую процедуру удаления расхода.
             cursor.callproc('delete_expense', (expense_id,))
-            
-            # Возвращаем деньги обратно на баланс карты (так как расход аннулирован)
-            cursor.execute(
-                'UPDATE accounts SET balance = balance + %s WHERE id_card = %s',
-                (expense['sum'], expense['id_card'])
-            )
         
         conn.commit()
         return {'message': 'Операция расхода успешно удалена!'}
     except Exception as e:
         conn.rollback()
         response.status = 500
-        return {'error': 'Ошибка при удалении расхода', 'detail': str(e)}
+        import traceback
+        print(traceback.format_exc())
+        return {'error': 'Ошибка при удалении расходов', 'detail': str(e)}
     finally:
         conn.close()

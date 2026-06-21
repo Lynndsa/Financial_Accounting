@@ -259,11 +259,12 @@ def delete_goal(goal_id):
 
 @route('/api/goals/<goal_id:int>/topup', method='POST')
 def topup_goal(goal_id):
-    """Пополнение копилки."""
+    """Пополнение копилки (прибавляем к цели) со списанием с карты (вычитаем оттуда) и фиксацией расхода."""
     data = _get_request_data()
     id_user = data.get('user_id')
     amount = data.get('amount')
 
+    # 1. Валидации ID и суммы
     id_err = validate_id(id_user, 'user_id') or validate_id(goal_id, 'id')
     if id_err:
         response.status = 400
@@ -274,33 +275,99 @@ def topup_goal(goal_id):
         response.status = 400
         return {'error': amount_err}
 
+    topup_sum = float(amount)
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
+            # 2. Получаем информацию о цели (копилке)
             cursor.execute(
-                'SELECT current_amount, target_amount FROM goals WHERE id = %s AND id_user = %s',
+                'SELECT name, current_amount, target_amount, id_card, is_active FROM goals WHERE id = %s AND id_user = %s',
                 (goal_id, id_user)
             )
-            row = cursor.fetchone()
-            if not row:
+            goal_row = cursor.fetchone()
+            if not goal_row:
                 response.status = 404
                 return {'error': 'Цель не найдена'}
 
-            new_amount = float(row['current_amount']) + float(amount)
+            if not goal_row['is_active']:
+                response.status = 400
+                return {'error': 'Эта цель уже закрыта или заархивирована'}
+
+            id_card = goal_row['id_card']
+            goal_name = goal_row['name']
+            
+            if not id_card:
+                response.status = 400
+                return {'error': 'К этой цели не привязан счет/карта для списания средств'}
+
+            # 3. Проверяем баланс карты/счета в accounts (откуда списываем)
+            cursor.execute('SELECT balance FROM accounts WHERE id_card = %s', (id_card,))
+            account_row = cursor.fetchone()
+            if not account_row:
+                response.status = 400
+                return {'error': 'Привязанный к цели счет не найден'}
+
+            if float(account_row['balance']) < topup_sum:
+                response.status = 400
+                return {'error': f"На счете недостаточно средств. Баланс: {account_row['balance']} ₽"}
+
+            # 4. Категория расхода: "Копилка: Название"
+            expense_cat_name = f"Копилка: {goal_name}"
+            cursor.execute('SELECT id FROM expense_categories WHERE name = %s', (expense_cat_name,))
+            category_row = cursor.fetchone()
+            
+            if category_row:
+                id_category = category_row['id']
+            else:
+                # Если категории нет — создаем
+                cursor.callproc('create_new_expense_category', (expense_cat_name,))
+                cursor.execute('SELECT LAST_INSERT_ID() as id')
+                id_category = cursor.fetchone()['id']
+
+            # 5. Добавляем операцию в РАСХОДЫ (деньги ушли в копилку)
+            current_date_str = date.today().isoformat()
+            cursor.callproc('create_new_expenses', (
+                int(id_category),
+                int(id_card),
+                current_date_str,
+                topup_sum
+            ))
+
+            # 6. СПИСЫВАЕМ деньги с баланса карты/счета (уменьшаем баланс карты)
             cursor.execute(
-                'UPDATE goals SET current_amount = %s WHERE id = %s',
-                (new_amount, goal_id)
+                'UPDATE accounts SET balance = balance - %s WHERE id_card = %s',
+                (topup_sum, id_card)
             )
+
+            # 7. НАКАПЛИВАЕМ деньги в копилке: прибавляем сумму пополнения к текущей сумме цели (current_amount)
+            new_amount = float(goal_row['current_amount']) + topup_sum
+            target_amount = float(goal_row['target_amount'])
+            
+            # Проверяем, выполнена ли цель
+            is_completed = new_amount >= target_amount
+            new_active_status = 0 if is_completed else 1
+
+            cursor.execute(
+                'UPDATE goals SET current_amount = %s, is_active = %s WHERE id = %s',
+                (new_amount, new_active_status, goal_id)
+            )
+
+        # Подтверждаем транзакцию
         conn.commit()
+        
         return {
-            'message': 'Копилка пополнена',
+            'message': 'Копилка успешно пополнена, расход зафиксирован!',
             'current_amount': new_amount,
-            'is_completed': new_amount >= float(row['target_amount']),
+            'is_completed': is_completed,
         }
+
     except Exception as e:
         conn.rollback()
         response.status = 500
-        return {'error': 'Ошибка при пополнении копилки', 'detail': str(e)}
+        import traceback
+        error_details = traceback.format_exc()
+        print(error_details)  # Выведет полную ошибку в терминал Питона
+        return {'error': 'Ошибка при проведении транзакции пополнения', 'message': str(e), 'detail': error_details}
     finally:
         conn.close()
 
