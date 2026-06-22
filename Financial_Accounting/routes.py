@@ -10,15 +10,18 @@ from database.db import get_connection
 from validations.auth_validation import validate_registration
 from validations.personal_account_validation import validate_personal_account
 
+# Главная страница приложения
 @route('/')
 def home():
     return template('hello_page.tpl')
 
+# Выход из аккаунта и удаление cookie
 @route('/logout')
 def logout():
     response.delete_cookie('username', path='/')
     return template('hello_page.tpl')
 
+# Страница авторизации
 @route('/login_page')
 def login_page():
     return template(
@@ -28,11 +31,15 @@ def login_page():
         username='',
     )
 
+# Обработка входа пользователя
 @route('/login', method='POST')
 def login():
+
+    # Получение данных формы
     username = request.forms.getunicode('username')
     password = request.forms.getunicode('password')
 
+    # Проверка логина и пароля
     if login_user(username, password):
         response.set_cookie(
             'username',
@@ -43,11 +50,13 @@ def login():
             path='/'
         )
 
+        # Подключение к БД для получения данных пользователя
         conn = get_connection()
 
         try:
             with conn.cursor() as cursor:
 
+                # Получение данных профиля и счета
                 cursor.execute("""
                     SELECT
                         p.name,
@@ -74,6 +83,7 @@ def login():
         finally:
             conn.close()
 
+        # Открытие личного кабинета
         return template(
             'personal_account.tpl',
             title='Личный кабинет',
@@ -83,6 +93,7 @@ def login():
             success=''
         )
 
+    # Вывод ошибки при неверном логине или пароле
     return template(
         'login.tpl',
         error='Неверный логин или пароль',
@@ -90,6 +101,7 @@ def login():
         username=username
     )
 
+# Страница регистрации
 @route('/register_page')
 def register_page():
     return template(
@@ -102,14 +114,20 @@ def register_page():
         password2=''
     )
 
+# Обработка регистрации нового пользователя
 @route('/register', method='POST')
 def register():
+
+    # Получение данных формы
     username = request.forms.getunicode('username')
     email = request.forms.getunicode('email')
     password = request.forms.getunicode('password')
     password2 = request.forms.getunicode('password2')
 
+    # Проверка корректности введенных данных
     errors = validate_registration(username, email, password, password2)
+
+    # Возврат формы при наличии ошибок
     if errors:
         return template(
             'registration.tpl',
@@ -121,6 +139,7 @@ def register():
             password2=password2
         )
 
+    # Создание пользователя
     ok, msg = register_user(
         None,
         None,
@@ -131,6 +150,7 @@ def register():
         password
     )
 
+    # Обработка ошибок создания пользователя
     if not ok:
         return template(
             'registration.tpl',
@@ -142,6 +162,7 @@ def register():
             password2=password2
         )
 
+    # Переход на страницу авторизации
     return template(
         'login.tpl',
         success='Регистрация успешно завершена',
@@ -149,10 +170,10 @@ def register():
         error=''
     )
 
-
+# Открытие страницы доходов
 @route('/income')
 def income_page():
-    # 1. Получаем имя пользователя из куки авторизации
+    # Получение имени пользователя из cookie
     username = unquote(request.get_cookie('username') or '')
     if not username:
         return redirect('/login_page')
@@ -160,17 +181,16 @@ def income_page():
     user_id = None
     card_id = None
 
-    # 2. Идём в БД, чтобы узнать id_user и его id_card
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # Находим ID пользователя по его логину
+            # Получение id пользователя
             cursor.execute('SELECT id_user FROM user WHERE username = %s', (username,))
             user_row = cursor.fetchone()
             if user_row:
                 user_id = user_row['id_user']
                 
-                # Ищем любой доступный счёт (карту) этого пользователя в таблице accounts
+                # Получение id счета пользователя
                 cursor.execute('SELECT id_card FROM accounts WHERE id_user = %s LIMIT 1', (user_id,))
                 card_row = cursor.fetchone()
                 if card_row:
@@ -184,7 +204,7 @@ def income_page():
     if not card_id:
         card_id = 0 
 
-    # 3. Передаем всё это напрямую в шаблон tpl
+    # Передача данных в шаблон
     return template(
         'income.tpl',
         title='Поступления',
@@ -194,9 +214,10 @@ def income_page():
     )
 
 
+# Открытие страницы расходов
 @route('/expenses')
 def expenses_page():
-    # 1. Получаем имя пользователя из куки авторизации
+    # Получение имя пользователя из куки авторизации
     username = unquote(request.get_cookie('username') or '')
     if not username:
         return redirect('/login_page')
@@ -204,7 +225,7 @@ def expenses_page():
     user_id = None
     card_id = None
 
-    # 2. Идём в БД, чтобы узнать id_user и его id_card
+    # Получение id_user и его id_card
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -213,7 +234,7 @@ def expenses_page():
             if user_row:
                 user_id = user_row['id_user']
                 
-                # Ищем любой доступный счёт (карту) этого пользователя в таблице accounts
+                # Поиск любой доступный счёт (карту) этого пользователя в таблице accounts
                 cursor.execute('SELECT id_card FROM accounts WHERE id_user = %s LIMIT 1', (user_id,))
                 card_row = cursor.fetchone()
                 if card_row:
@@ -227,7 +248,7 @@ def expenses_page():
     if not card_id:
         card_id = 0 
 
-    # 3. Передаем данные в шаблон tpl расходов
+    # Передача данных в шаблон tpl расходов
     return template(
         'expenses.tpl',
         title='Расходы',
@@ -236,10 +257,10 @@ def expenses_page():
         card_id=card_id
     )
 
-
+# Открытие страницы накоплений
 @route('/goals')
 def goals_page():
-    # 1. Проверяем авторизацию через куки
+    # 1. Проверка авторизацию через куки
     username = unquote(request.get_cookie('username') or '')
     if not username:
         return redirect('/login_page')
@@ -247,7 +268,7 @@ def goals_page():
     user_id = None
     card_id = None
 
-    # 2. Получаем реальные ID пользователя и его счета
+    # Получение реальныого ID пользователя и его счета
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -256,7 +277,7 @@ def goals_page():
             if user_row:
                 user_id = user_row['id_user']
                 
-                # Ищем активный счёт
+                # Поиск активного счёта
                 cursor.execute('SELECT id_card FROM accounts WHERE id_user = %s LIMIT 1', (user_id,))
                 card_row = cursor.fetchone()
                 if card_row:
@@ -269,19 +290,23 @@ def goals_page():
     if not card_id:
         card_id = 0 
 
-    # 3. Передаем переменные в шаблон tpl
+    # Передача переменных в шаблон tpl
     return template(
-        'goals.tpl',  # убедись, что файл в паблике называется goals.tpl
+        'goals.tpl',
         title='Копилка',
         year=datetime.now().year,
         user_id=user_id,
         card_id=card_id
     )
 
-
+# Отображение личного кабинета пользователя
 @route('/personal_account')
 def personal_account():
+
+    # Получение логина пользователя из cookie
     username = unquote(request.get_cookie('username') or '')
+
+    # Проверка авторизации
     if not username:
         return redirect('/')
 
@@ -290,6 +315,7 @@ def personal_account():
     try:
         with conn.cursor() as cursor:
 
+            # Получение информации о пользователе и его счете
             cursor.execute("""
                 SELECT
                     p.name,
@@ -320,6 +346,7 @@ def personal_account():
     finally:
         conn.close()
 
+    # Отображение страницы личного кабинета
     return template(
         'personal_account.tpl',
         title='Личный кабинет',
@@ -329,19 +356,24 @@ def personal_account():
         success=''
     )
 
+# Обновление данных личного кабинета
 @route('/update_personal_account', method='post')
 def update_personal_account():
+
+    # Получение логина текущего пользователя
     username = unquote(request.get_cookie('username') or '')
 
     if not username:
         return redirect('/')
 
+    # Получение данных формы
     name = request.forms.getunicode('name')
     lastname = request.forms.getunicode('lastname')
     surname = request.forms.getunicode('surname')
     datebirth = request.forms.getunicode('datebirth')
     name_card = request.forms.getunicode('name_card')
 
+    # Проверка корректности введенных данных
     errors = validate_personal_account(name, lastname, surname, datebirth, name_card)
     
     conn = get_connection()
@@ -396,6 +428,7 @@ def update_personal_account():
     try:
         with conn.cursor() as cursor:
 
+            # Обновление профиля пользователя
             cursor.execute("""
                 UPDATE profiles p
                 JOIN user u ON p.id_user=u.id_user
@@ -413,6 +446,7 @@ def update_personal_account():
                 username
             ))
 
+            # Обновление названия счета
             cursor.execute("""
                 UPDATE accounts a
                 JOIN user u ON a.id_user=u.id_user
@@ -423,6 +457,7 @@ def update_personal_account():
                 username
             ))
 
+            # Повторное получение данных после изменения
             cursor.execute("""
                 SELECT
                     p.name,
@@ -450,11 +485,13 @@ def update_personal_account():
                 response.delete_cookie('username', path='/')
                 return template('hello_page.tpl')
 
+        # Подтверждение транзакции
         conn.commit()
 
     finally:
         conn.close()
 
+    # Вывод страницы с сообщением об успешном обновлении
     return template(
         'personal_account.tpl',
         title='Личный кабинет',
