@@ -1,58 +1,99 @@
 % rebase('layout', title=title, year=year)
 
-<h2>{{title}}</h2>
+<link rel="stylesheet" href="/static/content/goals.css">
 
-<div id="goal-form-message" style="display:none;"></div>
+<main class="main-content">
 
-<form id="goal-form" class="form-inline" style="margin-bottom: 20px;">
-    <input type="hidden" id="goal-id" value="" />
+    <div id="goal-form-message" style="display:none;"></div>
 
-    <div class="form-group">
-        <label for="goal-name">Название</label>
-        <input type="text" id="goal-name" class="form-control" placeholder="Например, Отпуск" required maxlength="100" />
+    <div class="action-bar">
+        <button type="button" class="btn btn-action" id="open-goal-form">
+            Добавить цель
+        </button>
     </div>
 
-    <div class="form-group">
-        <label for="goal-target">Цель, ₽</label>
-        <input type="number" id="goal-target" class="form-control" placeholder="50000" min="0.01" step="0.01" required />
+    <div id="form-wrapper" style="display:none;">
+        <div class="form-overlay"></div>
+
+        <div class="form-container">
+            <form id="goal-form">
+
+                <input type="hidden" id="goal-id" value="" />
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label for="goal-name">Название</label>
+                        <input type="text"
+                               id="goal-name"
+                               placeholder="Например, Отпуск"
+                               required
+                               maxlength="100" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="goal-target">Цель, ₽</label>
+                        <input type="number"
+                               id="goal-target"
+                               placeholder="50000"
+                               min="0.01"
+                               step="0.01"
+                               required />
+                    </div>
+
+                    <div class="form-group" id="current-amount-group">
+                        <label for="goal-current">Уже накоплено, ₽</label>
+                        <input type="number"
+                               id="goal-current"
+                               placeholder="0"
+                               min="0"
+                               step="0.01" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="goal-deadline">Дедлайн</label>
+                        <input type="date"
+                               id="goal-deadline" />
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="goal-description">Описание</label>
+                        <input type="text"
+                               id="goal-description"
+                               placeholder="Необязательно"
+                               maxlength="200" />
+                    </div>
+
+                </div>
+
+                <div class="form-buttons">
+                    <button type="button"
+                            class="btn btn-cancel"
+                            id="goal-cancel-btn"
+                            style="display:none;">
+                        Отмена
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-submit"
+                            id="goal-submit-btn">
+                        Создать цель
+                    </button>
+                </div>
+
+            </form>
+        </div>
     </div>
 
-    <div class="form-group" id="current-amount-group">
-        <label for="goal-current">Уже накоплено, ₽</label>
-        <input type="number" id="goal-current" class="form-control" placeholder="0" min="0" step="0.01" />
+    <div class="goals-wrapper">
+        <div class="goals-card-list" id="goals-table-body">
+            <div class="loading-status">
+                Загрузка...
+            </div>
+        </div>
     </div>
 
-    <div class="form-group">
-        <label for="goal-deadline">Дедлайн</label>
-        <input type="date" id="goal-deadline" class="form-control" />
-    </div>
-
-    <div class="form-group">
-        <label for="goal-description">Описание</label>
-        <input type="text" id="goal-description" class="form-control" placeholder="Необязательно" maxlength="200" />
-    </div>
-
-    <button type="submit" class="btn btn-primary" id="goal-submit-btn">Создать цель</button>
-    <button type="button" class="btn btn-default" id="goal-cancel-btn" style="display:none;">Отмена</button>
-</form>
-
-<table class="table table-bordered" id="goals-table">
-    <thead>
-        <tr>
-            <th>Название</th>
-            <th>Накоплено</th>
-            <th>Цель</th>
-            <th>Прогресс</th>
-            <th>Дедлайн</th>
-            <th>Описание</th>
-            <th>Действия</th>
-        </tr>
-    </thead>
-    <tbody id="goals-table-body">
-        <tr><td colspan="7">Загрузка...</td></tr>
-    </tbody>
-</table>
-
+</main>
 <script>
 (function () {
     // Получаем ID авторизованного юзера и его счета из Bottle шаблонизатора
@@ -73,12 +114,22 @@
     var submitBtn = document.getElementById('goal-submit-btn');
     var cancelBtn = document.getElementById('goal-cancel-btn');
     var messageBox = document.getElementById('goal-form-message');
+    var formWrapper = document.getElementById('form-wrapper');
+    var openGoalBtn = document.getElementById('open-goal-form');
 
     function showMessage(text, isError) {
         messageBox.textContent = text;
         messageBox.className = isError ? 'alert alert-danger' : 'alert alert-success';
         messageBox.style.display = 'block';
         setTimeout(function () { messageBox.style.display = 'none'; }, 4000);
+    }
+
+    function openForm() {
+        formWrapper.style.display = 'block';
+    }
+
+    function closeForm() {
+        formWrapper.style.display = 'none';
     }
 
     function apiRequest(url, options) {
@@ -102,13 +153,13 @@
     function resetForm() {
         form.reset();
         idField.value = '';
-        currentGroup.style.display = 'inline-block';
+        currentGroup.style.display = 'block';
         currentField.disabled = false;
         descriptionField.disabled = false;
         submitBtn.textContent = 'Создать цель';
-        if (cancelBtn) cancelBtn.style.display = 'none';
-        var formWrapper = document.getElementById('form-wrapper');
-        if (formWrapper) formWrapper.style.display = 'none'; // Закрываем контейнер формы
+        if (cancelBtn) {
+            cancelBtn.style.display = 'none';
+        }
     }
 
     function loadGoals() {
@@ -186,15 +237,18 @@
         targetField.value = goal.target_amount;
         
         currentField.value = goal.current_amount;
-        currentGroup.style.display = 'none'; 
+        currentGroup.style.display = 'none';
         
         deadlineField.value = goal.deadline || '';
         descriptionField.value = goal.description || '';
-        descriptionField.disabled = false; 
         
         submitBtn.textContent = 'Сохранить изменения';
-        if (cancelBtn) cancelBtn.style.display = 'inline-block';
-        window.scrollTo(0, form.offsetTop - 100);
+        
+        if (cancelBtn) {
+            cancelBtn.style.display = 'inline-block';
+        }
+        
+        openForm();
     }
 
     function deleteGoal(id) {
@@ -228,7 +282,7 @@
         apiRequest(apiBase + '/' + id + '/topup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount: amount, user_id: CURRENT_USER_ID }) // Добавили user_id
+            body: JSON.stringify({ amount: amount, user_id: CURRENT_USER_ID })
         })
             .then(function (data) {
                 if (data.error) {
@@ -244,7 +298,19 @@
             });
     }
 
-    cancelBtn.addEventListener('click', resetForm);
+    openGoalBtn.addEventListener('click', function () {
+        resetForm();
+        openForm();
+    });
+
+    document
+        .querySelector('.form-overlay')
+        .addEventListener('click', closeForm);
+
+    cancelBtn.addEventListener('click', function () {
+        resetForm();
+        closeForm();
+    });
 
     form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -276,6 +342,7 @@
                     }
                     showMessage(data.message, false);
                     resetForm();
+                    closeForm();
                     loadGoals();
                 })
                 .catch(function (err) {
@@ -288,8 +355,8 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    user_id: CURRENT_USER_ID, // Реальный юзер
-                    id_card: CURRENT_CARD_ID, // Реальный счет
+                    user_id: CURRENT_USER_ID, 
+                    id_card: CURRENT_CARD_ID, 
                     name: nameField.value,
                     target_amount: targetField.value,
                     current_amount: currentField.value || 0,
@@ -304,6 +371,7 @@
                     }
                     showMessage(data.message, false);
                     resetForm();
+                    closeForm();
                     loadGoals();
                 })
                 .catch(function (err) {

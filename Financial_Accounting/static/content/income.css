@@ -1,3 +1,364 @@
-body
-{
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* СОХРАНЕНО: Верхняя скошенная фигура и её объемная тень над контентом */
+body::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 155px;
+    background-color: #6b1111; /* Тень излома */
+    clip-path: polygon(0 0, 100% 0, 100% 155px, 55% 95px, 45% 135px, 0 65px);
+    z-index: -2;
+}
+
+body::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 140px; /* Основная фигура */
+    background-color: #B40000;
+    clip-path: polygon(0 0, 100% 0, 100% 140px, 55% 80px, 45% 120px, 0 50px);
+    z-index: -1;
+}
+
+/* --- СТИЛИ СТРАНИЦЫ ДОХОДОВ --- */
+
+/* Контейнер контента — отступы сверху учитывают излом фоновой фигуры */
+.main-content {
+    width: 100%;
+    padding: 7rem 1.5rem 4rem 1.5rem; /* Увеличен верхний отступ под фигуру */
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem; /* Большие зазоры между карточками */
+}
+
+/* Крупный выразительный заголовок страницы */
+.page-title {
+    font-size: 2.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: -0.5rem;
+}
+
+/* Двухколоночная сетка для ввода и аналитики */
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr; /* Дали аналитике чуть больше места под крупную диаграмму */
+    gap: 3rem;
+    width: 100%;
+}
+
+/* Общая большая темно-бордовая карточка-контейнер */
+.goals-wrapper {
+    background-color: #5c0707;
+    border-radius: 45px; /* Массивные скругления */
+    padding: 4.5rem 5rem; /* Большие внутренние поля */
+    width: 100%;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+}
+
+/* Центрирование контента для блока диаграммы */
+.d-flex-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+}
+
+.card-section-title {
+    font-size: 2.1rem;
+    font-weight: 700;
+    margin-bottom: 3rem;
+    letter-spacing: 0.5px;
+}
+
+/* Поля формы в два ряда */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem; /* Больше воздуха между инпутами */
+    margin-bottom: 2.5rem;
+}
+
+    .form-grid .full-width {
+        grid-column: 1 / -1;
+    }
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+    .form-group label {
+        font-weight: 700;
+        font-size: 1.35rem;
+        letter-spacing: 0.5px;
+        color: #ffffff;
+    }
+
+/* Укрупненные инпуты, селекты и календари */
+.form-control {
+    height: 62px; /* Высота 62px */
+    border-radius: 24px; /* Сильное скругление */
+    padding: 0 2rem;
+    font-size: 1.35rem; /* Крупный текст внутри полей */
+    font-family: 'Inter', sans-serif;
+    color: #777777; /* Сделали вводимый текст серым */
+    background-color: #ffffff;
+    outline: none;
+    width: 100%;
+}
+
+    /* Стилизация плейсхолдеров (подсказок) */
+    .form-control::placeholder {
+        color: #777777; /* Подсказки серые */
+        opacity: 1;
+    }
+
+/* Кастомная стрелочка для выпадающих списков select */
+select.form-control {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://w3.org' viewBox='0 0 24 24' fill='none' stroke='%23777777' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1.5rem center;
+    background-size: 1.4rem;
+    padding-right: 3.5rem;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 5px rgba(180, 0, 0, 0.5);
+}
+
+.helper-text {
+    color: rgba(255, 255, 255, 0.5); /* Серые подписи под инпутами */
+    font-size: 1.05rem;
+    margin-top: 0.3rem;
+}
+
+.validation-error {
+    color: #fca5a5;
+    font-size: 0.95rem;
+    margin-top: 0.4rem;
+    display: none;
+}
+
+.form-divider {
+    height: 2px;
+    background-color: rgba(255, 255, 255, 0.12);
+    margin: 3.5rem 0;
+    width: 100%;
+}
+
+/* СТИЛИЗАЦИЯ КНОПОК ПОДТВЕРЖДЕНИЯ (Всегда белый текст) */
+.btn {
+    font-family: 'Inter', sans-serif;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff !important; /* Защита цвета текста */
+}
+
+.full-width-btn {
+    width: 100%;
+}
+
+/* Кнопка "Сохранить поступление" */
+.btn-submit {
+    background-color: #b15d5d;
+    padding: 1.4rem 4rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    border-radius: 22px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+    .btn-submit:hover {
+        background-color: #a04c4c;
+        color: #ffffff !important;
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+    }
+
+/* Кнопка "Создать категорию / Показать историю" */
+.btn-secondary {
+    background-color: #4c0505;
+    padding: 1.4rem 4rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    border-radius: 22px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+    .btn-secondary:hover {
+        background-color: #360202;
+        color: #ffffff !important;
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+    }
+
+/* БЛОК КРУПНОЙ ДИАГРАММЫ */
+.month-filter-group {
+    width: 100%;
+    max-width: 280px;
+    margin-top: 2.5rem; /* Опустили выбор месяца пониже над диаграммой */
+    margin-bottom: 2.5rem;
+}
+
+.chart-container {
+    position: relative;
+    margin: 2.5rem auto;
+    height: 420px; /* Сделали диаграмму очень большой */
+    width: 420px;
+}
+
+.no-data-text {
+    color: rgba(255, 255, 255, 0.5); /* Серый текст отсутствия данных */
+    font-size: 1.3rem;
+    margin: 2.5rem 0;
+}
+
+/* БЛОК ИСТОРИИ ОПЕРАЦИЙ */
+#historyCard {
+    animation: fadeIn 0.35s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 3rem;
+    gap: 2rem;
+}
+
+.filter-select-group {
+    width: 100%;
+    max-width: 320px;
+}
+
+/* ТАБЛИЦА ОПЕРАЦИЙ КАРТОЧНОГО ТИПА */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 1rem; /* Зазоры между строчками */
+}
+
+    .modern-table th {
+        padding: 1.2rem 2rem;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.5); /* Серые заголовки таблицы */
+        border-bottom: 3px solid rgba(255, 255, 255, 0.15);
+        text-align: left;
+    }
+
+    .modern-table td {
+        padding: 1.5rem 2rem;
+        font-size: 1.25rem;
+        background-color: rgba(0, 0, 0, 0.22); /* Темные карточные строчки */
+        color: #ffffff;
+    }
+
+    /* Скругление краев у рядов таблицы */
+    .modern-table tbody tr td:first-child {
+        border-radius: 20px 0 0 20px;
+    }
+
+    .modern-table tbody tr td:last-child {
+        border-radius: 0 20px 20px 0;
+    }
+
+/* Укрупненные инлайн-кнопки удаления в истории */
+.btn-danger-xs {
+    background-color: #ef4444;
+    border: none;
+    padding: 0.7rem 1.8rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #ffffff !important;
+}
+
+    .btn-danger-xs:hover {
+        background-color: #dc2626;
+        color: #ffffff !important;
+        transform: scale(1.02);
+    }
+
+/* Адаптированность под средние и мобильные мониторы */
+@media (max-width: 1200px) {
+    .chart-container {
+        height: 340px;
+        width: 340px;
+    }
+}
+
+@media (max-width: 1100px) {
+    .grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+
+    .chart-container {
+        height: 420px;
+        width: 420px;
+    }
+}
+
+@media (max-width: 900px) {
+    .main-content {
+        padding: 4rem 1rem 2rem 1rem;
+    }
+    /* Коррекция отступа на мобильных под фигуры */
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .history-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+
+    .filter-select-group {
+        max-width: 100%;
+    }
+
+    .chart-container {
+        height: 280px;
+        width: 280px;
+    }
 }
