@@ -20,6 +20,9 @@
     <RootNamespace>Financial_Accounting</RootNamespace>
     <InterpreterId>MSBuild|env3|$(MSBuildProjectFullPath)</InterpreterId>
     <InterpreterId>MSBuild|env2|$(MSBuildProjectFullPath)</InterpreterId>
+    <TestFramework>unittest</TestFramework>
+    <UnitTestPattern>test*.py</UnitTestPattern>
+    <UnitTestRootDirectory>.</UnitTestRootDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -44,6 +47,12 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="files_module\income.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="tests\test_auth.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="tests\test_validation.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="validations\auth_validation.py">
