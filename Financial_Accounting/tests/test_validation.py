@@ -6,6 +6,7 @@ from validations.personal_account_validation import validate_personal_account
 
 class TestValidateRegistration(unittest.TestCase):
 
+    # Проверка успешной регистрации при корректных данных
     def test_correct_data(self):
         errors = validate_registration(
             "user123",
@@ -15,6 +16,7 @@ class TestValidateRegistration(unittest.TestCase):
         )
         self.assertEqual(errors, {})
 
+    # Проверка обработки пустого логина
     def test_empty_username(self):
         errors = validate_registration(
             "",
@@ -24,6 +26,7 @@ class TestValidateRegistration(unittest.TestCase):
         )
         self.assertIn("username", errors)
 
+    # Проверка обработки слишком короткого логина
     def test_short_username(self):
         errors = validate_registration(
             "abc",
@@ -33,6 +36,7 @@ class TestValidateRegistration(unittest.TestCase):
         )
         self.assertIn("username", errors)
 
+    # Проверка обработки некорректного email
     def test_invalid_email(self):
         errors = validate_registration(
             "user123",
@@ -42,6 +46,7 @@ class TestValidateRegistration(unittest.TestCase):
         )
         self.assertIn("email", errors)
 
+    # Проверка обработки слишком короткого пароля
     def test_short_password(self):
         errors = validate_registration(
             "user123",
@@ -51,6 +56,7 @@ class TestValidateRegistration(unittest.TestCase):
         )
         self.assertIn("password", errors)
 
+    # Проверка обработки несовпадающих паролей
     def test_passwords_not_equal(self):
         errors = validate_registration(
             "user123",
@@ -63,6 +69,7 @@ class TestValidateRegistration(unittest.TestCase):
 
 class TestValidatePersonalAccount(unittest.TestCase):
 
+    # Проверка корректных данных профиля
     def test_correct_data(self):
         errors = validate_personal_account(
             "Иван",
@@ -74,6 +81,7 @@ class TestValidatePersonalAccount(unittest.TestCase):
 
         self.assertEqual(errors, {})
 
+    # Проверка обработки некорректного имени
     def test_invalid_name(self):
         errors = validate_personal_account(
             "И1",
@@ -85,6 +93,7 @@ class TestValidatePersonalAccount(unittest.TestCase):
 
         self.assertIn("name", errors)
 
+    # Проверка обработки некорректной фамилии
     def test_invalid_lastname(self):
         errors = validate_personal_account(
             "Иван",
@@ -96,6 +105,7 @@ class TestValidatePersonalAccount(unittest.TestCase):
 
         self.assertIn("lastname", errors)
 
+    # Проверка обработки некорректного отчества
     def test_invalid_surname(self):
         errors = validate_personal_account(
             "Иван",
@@ -107,6 +117,7 @@ class TestValidatePersonalAccount(unittest.TestCase):
 
         self.assertIn("surname", errors)
 
+    # Проверка обработки некорректного названия счета
     def test_invalid_card_name(self):
         errors = validate_personal_account(
             "Иван",
@@ -118,6 +129,7 @@ class TestValidatePersonalAccount(unittest.TestCase):
 
         self.assertIn("name_card", errors)
 
+    # Проверка обработки даты рождения из будущего
     def test_future_date(self):
 
         tomorrow = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
@@ -132,6 +144,7 @@ class TestValidatePersonalAccount(unittest.TestCase):
 
         self.assertIn("datebirth", errors)
 
+    # Проверка обработки возраста больше 100 лет
     def test_too_old(self):
         errors = validate_personal_account(
             "Иван",

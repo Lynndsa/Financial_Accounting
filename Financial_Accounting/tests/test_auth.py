@@ -6,6 +6,8 @@ from files_module.auth import register_user, login_user
 
 
 class TestRegisterUser(unittest.TestCase):
+
+    # Проверка успешной регистрации пользователя
     @patch("files_module.auth.get_connection")
     def test_register_success(self, mock_connection):
 
@@ -28,6 +30,7 @@ class TestRegisterUser(unittest.TestCase):
         self.assertTrue(ok)
         self.assertEqual(msg, "OK")
 
+    # Проверка обработки регистрации существующего логина
     @patch("files_module.auth.get_connection")
     def test_username_exists(self, mock_connection):
 
@@ -53,6 +56,8 @@ class TestRegisterUser(unittest.TestCase):
 
 
 class TestLoginUser(unittest.TestCase):
+
+    # Проверка успешной авторизации пользователя
     @patch("files_module.auth.get_connection")
     def test_login_success(self, mock_connection):
 
@@ -70,6 +75,7 @@ class TestLoginUser(unittest.TestCase):
 
         self.assertTrue(result)
 
+    # Проверка обработки неверных учетных данных
     @patch("files_module.auth.get_connection")
     def test_login_fail(self, mock_connection):
 
