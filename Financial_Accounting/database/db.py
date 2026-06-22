@@ -1,6 +1,6 @@
 import pymysql
 
-
+# Функция регистрации нового пользователя
 def get_connection():
     return pymysql.connect(
         host='141.8.192.31',

@@ -6,6 +6,8 @@
 <link rel="stylesheet" href="static/content/registration.css">
 
 <main class="main-content">
+
+    <!-- Контейнер формы регистрации -->
     <div class="auth-wrapper">
         <div class="auth-card">
             <h2>Регистрация</h2>

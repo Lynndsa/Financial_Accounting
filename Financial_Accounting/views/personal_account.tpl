@@ -13,10 +13,10 @@
 
     <form action="/update_personal_account" method="post" class="account-grid">
         
-        <!-- ЛЕВАЯ КАРТОЧКА: ЛИЧНЫЕ ДАННЫЕ -->
+        <!-- Личные данные-->
         <div class="account-card user-data-card">
             
-            <!-- Ряд: Фамилия и Имя на одной линии -->
+            <!-- Фамилия и Имя на одной линии -->
             <div class="form-row-twin">
                 <div class="form-group">
                     <input type="text" name="lastname" placeholder="Фамилия" value="{{user['lastname'] or ''}}">
@@ -59,16 +59,15 @@
                 <input type="text" value="Логин: {{user['username']}}" readonly class="readonly-field">
             </div>
 
-            <!-- Большая кнопка изменения данных внизу карточки -->
             <button type="submit" class="btn-account-submit">Изменить данные</button>
         </div>
 
-        <!-- ПРАВАЯ КАРТОЧКА: БАЛАНС И СЧЁТ -->
+        <!-- Баланс и счет-->
         <div class="account-card balance-card">
             <h2 class="balance-label">Баланс счета</h2>
             <div class="balance-value">{{user['balance']}} р.</div>
             
-            <!-- Дополнительное редактирование названия счета -->
+            <!-- Редактирование названия счета -->
             <div class="form-group card-name-group">
                 <label for="name_card">Название счёта:</label>
                 <input type="text" id="name_card" name="name_card" placeholder="Основной счёт" value="{{user['name_card'] or ''}}">

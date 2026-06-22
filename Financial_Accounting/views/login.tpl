@@ -22,6 +22,7 @@
             <div class="alert alert-success">{{success}}</div>
         % end   
 
+         <!-- Форма регистрации -->
         <form action="/login" method="post">
             <div class="input-group">
                 <label for="auth_username">Логин</label>

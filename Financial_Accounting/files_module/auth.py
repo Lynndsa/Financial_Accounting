@@ -1,14 +1,16 @@
 import pymysql, hashlib
 from database.db import get_connection
 
-
+# Функция регистрации нового пользователя
 def register_user(name, lastname, surname, datebirth, username, email, password):
 
+    # Создание соединения с базой данных
     conn = get_connection()
     cur = conn.cursor()
 
     try:
 
+        # Вызов процедуры создания пользователя
         cur.callproc(
             'create_new_user',
             (
@@ -22,10 +24,12 @@ def register_user(name, lastname, surname, datebirth, username, email, password)
             )
         )
 
+        # Подтверждение изменений
         conn.commit()
 
         return True, 'OK'
 
+    # Обработка нарушения уникальности логина или email
     except pymysql.err.IntegrityError as e:
 
         conn.rollback()
@@ -46,7 +50,7 @@ def register_user(name, lastname, surname, datebirth, username, email, password)
         cur.close()
         conn.close()
 
-
+# Функция авторизации пользователя
 def login_user(username, password):
 
     conn = get_connection()
