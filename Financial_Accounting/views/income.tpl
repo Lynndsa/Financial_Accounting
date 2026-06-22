@@ -1,13 +1,11 @@
 % rebase('layout', title=title, year=year)
 
-<!-- Подключаем файл стилей (убедитесь, что путь совпадает с вашим проектом) -->
 <link rel="stylesheet" href="static/content/income.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <main class="main-content">
     
     <div class="grid">
-        <!-- КАРТОЧКА 1: ВВОД ДАННЫХ -->
         <div class="goals-wrapper">
             <h2 class="card-section-title">Ввод данных</h2>
             
@@ -31,7 +29,6 @@
                 <button type="submit" class="btn btn-submit full-width-btn">Сохранить поступление</button>
             </form>
             
-            <!-- Разделительная линия между формами -->
             <div class="form-divider"></div>
             
             <form id="addCategoryForm">
@@ -46,7 +43,6 @@
             </form>
         </div>
 
-        <!-- КАРТОЧКА 2: АНАЛИТИКА И ДИАГРАММА -->
         <div class="goals-wrapper d-flex-center">
             <div class="form-group month-filter-group">
                 <input type="month" id="filterMonth" class="form-control text-center">
@@ -61,7 +57,6 @@
         </div>
     </div>
 
-    <!-- КАРТОЧКА 3: ИСТОРИЯ ОПЕРАЦИЙ -->
     <div class="goals-wrapper" id="historyCard">
         <div class="history-header">
             <h2 class="card-section-title m-0">История операций</h2>
@@ -88,8 +83,8 @@
         </div>
     </div>
 </main>
+
 <script>
-    // Подхватываем авторизованные ID пользователя и его счета из Bottle
     const CURRENT_USER_ID = {{user_id}};
     const CURRENT_CARD_ID = {{card_id}};
 
@@ -140,68 +135,68 @@
         } catch (err) { console.error(err); }
     }
 
-async function loadChartData() {
-    const month = document.getElementById('filterMonth').value;
-    try {
-        const res = await fetch(`/api/incomes/chart?month=${month}&user_id=${CURRENT_USER_ID}`);
-        const data = await res.json();
-        const canvas = document.getElementById('incomeDonutChart');
-        const msg = document.getElementById('noDataMessage');
-        
-        if (!data.chart_data || data.chart_data.length === 0) {
-            canvas.style.display = 'none';
-            msg.style.display = 'block';
+    async function loadChartData() {
+        const month = document.getElementById('filterMonth').value;
+        try {
+            const res = await fetch(`/api/incomes/chart?month=${month}&user_id=${CURRENT_USER_ID}`);
+            const data = await res.json();
+            const canvas = document.getElementById('incomeDonutChart');
+            const msg = document.getElementById('noDataMessage');
+            
+            if (!data.chart_data || data.chart_data.length === 0) {
+                canvas.style.display = 'none';
+                msg.style.display = 'block';
+                if(myChart) myChart.destroy();
+                return;
+            }
+            
+            canvas.style.display = 'block';
+            msg.style.display = 'none';
+            
             if(myChart) myChart.destroy();
-            return;
-        }
-        
-        canvas.style.display = 'block';
-        msg.style.display = 'none';
-        
-        if(myChart) myChart.destroy();
-        
-        myChart = new Chart(canvas, {
-    type: 'doughnut',
-    data: {
-        labels: data.chart_data.map(i => i.category),
-        datasets: [{
-            data: data.chart_data.map(i => i.sum),
-            backgroundColor: ['#E28F8F', '#F5D6D6', '#E2A96D', '#C86B85', '#A94A4A', '#F3E9DC'],
-            borderWidth: 2,
-            borderColor: '#5c0707' 
-        }]
-    },
-    options: { 
-        responsive: true, 
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: true,
-                position: 'top',
-                labels: {
-                    color: '#ffffff',
-                    boxWidth: 20, // Сделали цветные квадратики легенды чуть больше
-                    font: {
-                        family: "'Inter', sans-serif",
-                        size: 16, // УВЕЛИЧИЛИ: Шрифт категорий над диаграммой (было 13)
-                        weight: '600'
+            
+            myChart = new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels: data.chart_data.map(i => i.category),
+                    datasets: [{
+                        data: data.chart_data.map(i => i.sum),
+                        backgroundColor: ['#E28F8F', '#F5D6D6', '#E2A96D', '#C86B85', '#A94A4A', '#F3E9DC'],
+                        borderWidth: 2,
+                        borderColor: '#5c0707' 
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#ffffff',
+                                boxWidth: 20,
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 16,
+                                    weight: '600'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            backgroundColor: '#4c0505',
+                            borderRadius: 14,
+                            padding: 14,
+                            titleFont: { size: 16, weight: '700' },
+                            bodyFont: { size: 15, weight: '500' }
+                        }
                     }
                 }
-            },
-            tooltip: {
-                titleColor: '#ffffff',
-                bodyColor: '#ffffff',
-                backgroundColor: '#4c0505',
-                borderRadius: 14,
-                padding: 14,
-                titleFont: { size: 16, weight: '700' }, // Увеличили шрифт заголовка подсказки
-                bodyFont: { size: 15, weight: '500' }   // Увеличили шрифт суммы подсказки
-            }
-        }
+            });
+        } catch (err) { console.error(err); }
     }
-});
-    } catch (err) { console.error(err); }
-}
 
     async function loadHistory() {
         const month = document.getElementById('filterMonth').value;
@@ -219,8 +214,6 @@ async function loadChartData() {
             
             data.history.forEach(item => {
                 const formattedDate = new Date(item.date_time).toLocaleDateString('ru-RU');
-                
-                // Создаем строку таблицы вручную, чтобы безопасно повесить событие клика на кнопку удаления
                 const row = document.createElement('tr');
                 
                 row.innerHTML = `
@@ -231,11 +224,9 @@ async function loadChartData() {
                     <td></td>
                 `;
                 
-                // Создаем кнопку «Удалить»
                 const deleteBtn = document.createElement('button');
                 deleteBtn.type = 'button';
                 deleteBtn.textContent = 'Удалить';
-                // Применяем простые стили, чтобы кнопка выделялась, или задай свой класс (например, btn-danger)
                 deleteBtn.style.backgroundColor = '#e74c3c';
                 deleteBtn.style.color = 'white';
                 deleteBtn.style.border = 'none';
@@ -244,17 +235,14 @@ async function loadChartData() {
                 deleteBtn.style.cursor = 'pointer';
                 deleteBtn.style.width = 'auto';
                 
-                // Навешиваем событие клика на функцию удаления
                 deleteBtn.addEventListener('click', () => deleteIncome(item.id_income));
                 
-                // Добавляем созданную кнопку в последнюю ячейку строки
                 row.lastElementChild.appendChild(deleteBtn);
                 tbody.appendChild(row);
             });
         } catch (err) { console.error(err); }
     }
 
-    // НОВАЯ ФУНКЦИЯ: Удаление конкретной записи дохода
     async function deleteIncome(incomeId) {
         if (!confirm('Вы уверены, что хотите удалить эту операцию дохода?')) return;
         
@@ -327,5 +315,3 @@ async function loadChartData() {
         }
     });
 </script>
-</body>
-</html>

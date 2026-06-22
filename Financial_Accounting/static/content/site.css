@@ -15,22 +15,24 @@ body {
     width: 100%;
 }
 
-/* ЛЕВАЯ ПАНЕЛЬ: Всегда одного фиксированного нормального размера, не прыгает */
 .sidebar {
-    width: 240px; /* Постоянный фиксированный крупный размер */
-    background-color: #4c0505; /* Глубокий темно-бордовый цвет */
+    width: 240px;
+    min-width: 240px;
+    max-width: 240px;
+    background-color: #4c0505;
     height: 100vh;
-    position: fixed; /* Панель зафиксирована на месте при скролле */
+    position: fixed;
     top: 0;
     left: 0;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     padding: 3rem 0;
-    flex-shrink: 0; /* Запрещает сайдбару сжиматься при наплыве контента */
+    flex-shrink: 0;
     z-index: 100;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.25);
 }
+
 
 .menu-top {
     display: flex;
@@ -39,33 +41,32 @@ body {
     width: 100%;
 }
 
-/* Текстовые элементы меню (Крупные и солидные) */
 .menu-item {
     color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
-    font-size: 1.25rem; /* Нормальный крупный шрифт */
-    font-weight: 600;
-    padding: 0.8rem 2.5rem; /* Внутренние отступы, чтобы текст не прижимался к краям */
+    font-size: 1.25rem;
+    font-weight: 700;
+    white-space: nowrap;
+    padding: 0.8rem 2.5rem;
     display: block;
     transition: all 0.2s ease;
 }
-
-    .menu-item:hover, .menu-item.active {
+    .menu-item:hover,
+    .menu-item.active {
         color: #ffffff !important;
-        font-weight: 700;
-        background-color: rgba(255, 255, 255, 0.05); /* Легкая подсветка при наведении */
+        background-color: rgba(255, 255, 255, 0.05);
     }
 
 .logout-container {
     width: 100%;
 }
 
-/* Кнопка Выход в самом низу */
 .btn-logout-sidebar {
     color: rgba(255, 255, 255, 0.6);
     text-decoration: none;
     font-size: 1.25rem;
-    font-weight: 600;
+    font-weight: 700;
+    white-space: nowrap;
     padding: 0.8rem 2.5rem;
     display: block;
     transition: all 0.2s ease;

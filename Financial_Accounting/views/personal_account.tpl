@@ -1,70 +1,82 @@
 % rebase('layout.tpl', title=title, year=year)
 
-<h2>Личный кабинет</h2>
+<!-- Подключаем стили личного кабинета из файла site.css -->
+<link rel="stylesheet" type="text/css" href="/static/content/personal_account.css" />
 
-% if success:
-    <div>
-        {{success}}
-    </div>
-% end
+<main class="main-content">
+    <!-- Обновленное красивое приветствие -->
+    <h1 class="welcome-title text-center">Рады видеть вас, <span class="accent-name">{{user['username']}}</span></h1>
 
-<form action="/update_personal_account" method="post">
-
-    <p>Имя</p>
-    <input type="text" name="name" value="{{user['name'] or ''}}">
-
-    % if errors.get('name'):
-        <div>{{errors['name']}}</div>
+    % if success:
+        <div class="alert alert-success text-center">{{success}}</div>
     % end
 
-    <p>Фамилия</p>
-    <input type="text" name="lastname" value="{{user['lastname'] or ''}}">
+    <form action="/update_personal_account" method="post" class="account-grid">
+        
+        <!-- ЛЕВАЯ КАРТОЧКА: ЛИЧНЫЕ ДАННЫЕ -->
+        <div class="account-card user-data-card">
+            
+            <!-- Ряд: Фамилия и Имя на одной линии -->
+            <div class="form-row-twin">
+                <div class="form-group">
+                    <input type="text" name="lastname" placeholder="Фамилия" value="{{user['lastname'] or ''}}">
+                    % if errors.get('lastname'):
+                        <div class="validation-error-text">{{errors['lastname']}}</div>
+                    % end
+                </div>
+                
+                <div class="form-group">
+                    <input type="text" name="name" placeholder="Имя" value="{{user['name'] or ''}}">
+                    % if errors.get('name'):
+                        <div class="validation-error-text">{{errors['name']}}</div>
+                    % end
+                </div>
+            </div>
 
-     % if errors.get('lastname'):
-        <div>{{errors['lastname']}}</div>
-    % end
+            <!-- Отчество -->
+            <div class="form-group full-width">
+                <input type="text" name="surname" placeholder="Отчество" value="{{user['surname'] or ''}}">
+                % if errors.get('surname'):
+                    <div class="validation-error-text">{{errors['surname']}}</div>
+                % end
+            </div>
 
-    <p>Отчество</p>
-    <input type="text" name="surname" value="{{user['surname'] or ''}}">
+            <!-- Дата рождения -->
+            <div class="form-group full-width">
+                <input type="date" name="datebirth" value="{{user['datebirth']}}">
+                % if errors.get('datebirth'):
+                    <div class="validation-error-text">{{errors['datebirth']}}</div>
+                % end
+            </div>
 
-    % if errors.get('surname'):
-        <div>{{errors['surname']}}</div>
-    % end
+            <!-- Почта (Email) -->
+            <div class="form-group full-width">
+                <input type="text" value="{{user['email']}}" readonly class="readonly-field">
+            </div>
 
-    <p>Дата рождения</p>
-    <input type="date" name="datebirth" value="{{user['datebirth']}}">
+            <!-- Логин -->
+            <div class="form-group full-width">
+                <input type="text" value="Логин: {{user['username']}}" readonly class="readonly-field">
+            </div>
 
-    % if errors.get('datebirth'):
-        <div>{{errors['datebirth']}}</div>
-    % end
+            <!-- Большая кнопка изменения данных внизу карточки -->
+            <button type="submit" class="btn-account-submit">Изменить данные</button>
+        </div>
 
-    <p>Логин</p>
-    <input type="text" value="{{user['username']}}" readonly>
+        <!-- ПРАВАЯ КАРТОЧКА: БАЛАНС И СЧЁТ -->
+        <div class="account-card balance-card">
+            <h2 class="balance-label">Баланс счета</h2>
+            <div class="balance-value">{{user['balance']}} р.</div>
+            
+            <!-- Дополнительное редактирование названия счета -->
+            <div class="form-group card-name-group">
+                <label for="name_card">Название счёта:</label>
+                <input type="text" id="name_card" name="name_card" placeholder="Основной счёт" value="{{user['name_card'] or ''}}">
+                % if errors.get('name_card'):
+                    <div class="validation-error-text">{{errors['name_card']}}</div>
+                % end
+            </div>
+        </div>
 
-    <p>Email</p>
-    <input type="text" value="{{user['email']}}" readonly>
-
-    <hr>
-
-    <h3>Счёт</h3>
-
-    <p>Название счёта</p>
-    <input type="text" name="name_card" value="{{user['name_card'] or ''}}">
-
-    % if errors.get('name_card'):
-        <div>{{errors['name_card']}}</div>
-    % end
-
-    <p>Баланс</p>
-    <input type="text" value="{{user['balance']}} ₽" readonly>
-
-    <p>Валюта</p>
-    <input type="text" value="Рубли" readonly>
-
-    <br><br>
-
-    <button type="submit">
-        Сохранить
-    </button>
-
-</form>
+    </form>
+</main>

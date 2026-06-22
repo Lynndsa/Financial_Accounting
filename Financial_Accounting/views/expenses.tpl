@@ -1,168 +1,88 @@
 % rebase('layout', title=title, year=year)
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>{{title}} — Копилка</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #f4f6f9;
-            color: #333;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        h1, h2, h3 { color: #2c3e50; }
-        
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .card {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-control {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        
-        button {
-            background-color: #e74c3c; /* Красный цвет для кнопки расхода */
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-        }
-        button:hover { background-color: #c0392b; }
-        .btn-secondary { background-color: #34495e; }
-        .btn-secondary:hover { background-color: #2c3e50; }
-        
-        #historyCard {
-            display: none;
-            margin-top: 20px;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        table th, table td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        table th { background-color: #f8f9fa; }
-        
-        .chart-container {
-            position: relative;
-            margin: auto;
-            height: 220px;
-            width: 220px;
-        }
-    </style>
-</head>
-<body>
 
-<div class="container">
-    <h1>{{title}} ({{year}} г.)</h1>
+<link rel="stylesheet" href="static/content/expenses.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<main class="main-content">
     
     <div class="grid">
-        <div class="card">
-            <h2>Ввод данных</h2>
+        <div class="goals-wrapper">
+            <h2 class="card-section-title">Ввод данных</h2>
+            
             <form id="addExpenseForm">
-                <div class="form-group">
-                    <label>Категория расхода:</label>
-                    <select id="expenseCategory" class="form-control" required></select>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="expenseCategory">Категория расхода:</label>
+                        <select id="expenseCategory" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseSum">Сумма (руб.):</label>
+                        <input type="number" id="expenseSum" class="form-control" step="0.01" min="0.01" required>
+                        <span id="sumError" class="validation-error"></span>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="expenseDate">Дата операции:</label>
+                        <input type="date" id="expenseDate" class="form-control">
+                        <small class="helper-text">По умолчанию будет выбран сегодняшний день</small>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Сумма (руб.):</label>
-                    <input type="number" id="expenseSum" class="form-control" step="0.01" min="0.01" required>
-                </div>
-                <div class="form-group">
-                    <label>Дата операции:</label>
-                    <input type="date" id="expenseDate" class="form-control">
-                    <small style="color: #7f8c8d; display: block; margin-top: 4px;">По умолчанию будет выбран сегодняшний день</small>
-                </div>
-                <button type="submit">Сохранить расход</button>
+                <button type="submit" class="btn btn-submit full-width-btn">Сохранить расход</button>
             </form>
             
-            <br>
+            <div class="form-divider"></div>
+            
             <form id="addCategoryForm">
-                <div class="form-group">
-                    <label>Новая категория расходов:</label>
-                    <input type="text" id="newCategoryName" class="form-control" placeholder="Название" required>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="newCategoryName">Новая категория расходов:</label>
+                        <input type="text" id="newCategoryName" class="form-control" placeholder="Название" required>
+                        <span id="catError" class="validation-error"></span>
+                    </div>
                 </div>
-                <button type="submit" class="btn-secondary">Создать категорию</button>
+                <button type="submit" class="btn btn-secondary full-width-btn">Создать категорию</button>
             </form>
         </div>
 
-        <div class="card" style="text-align: center;">
-            <div class="form-group" style="max-width: 150px; margin: 0 auto 15px;">
-                <input type="month" id="filterMonth" class="form-control">
+        <div class="goals-wrapper d-flex-center">
+            <div class="form-group month-filter-group">
+                <input type="month" id="filterMonth" class="form-control text-center">
             </div>
             
             <div class="chart-container">
                 <canvas id="expenseDonutChart"></canvas>
             </div>
-            <p id="noDataMessage" style="color: #7f8c8d; display: none;">Нет расходов за этот период</p>
+            <p id="noDataMessage" class="no-data-text">Нет расходов за этот период</p>
             
-            <br>
-            <button type="button" class="btn-secondary" id="toggleHistoryBtn">Показать историю операций</button>
+            <button type="button" class="btn btn-secondary full-width-btn" id="toggleHistoryBtn">Показать историю операций</button>
         </div>
     </div>
 
-    <div class="card" id="historyCard">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>История операций</h2>
-            <div class="form-group" style="width: 200px; margin: 0;">
+    <div class="goals-wrapper" id="historyCard">
+        <div class="history-header">
+            <h2 class="card-section-title m-0">История операций</h2>
+            <div class="form-group filter-select-group">
                 <select id="filterCategory" class="form-control">
                     <option value="all">Все категории</option>
                 </select>
             </div>
         </div>
         
-        <table id="historyTable">
-            <thead>
-                <tr>
-                    <th>Дата</th>
-                    <th>Категория</th>
-                    <th>Счёт</th>
-                    <th>Сумма</th>
-                    <th>Действие</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <div class="table-responsive">
+            <table id="historyTable" class="modern-table">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Категория</th>
+                        <th>Счёт</th>
+                        <th>Сумма</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
-</div>
-
+</main>
 <script>
     const CURRENT_USER_ID = {{user_id}};
     const CURRENT_CARD_ID = {{card_id}};
@@ -215,39 +135,67 @@
     }
 
     async function loadChartData() {
-        const month = document.getElementById('filterMonth').value;
-        try {
-            const res = await fetch(`/api/expenses/chart?month=${month}&user_id=${CURRENT_USER_ID}`);
-            const data = await res.json();
-            const canvas = document.getElementById('expenseDonutChart');
-            const msg = document.getElementById('noDataMessage');
-            
-            if (!data.chart_data || data.chart_data.length === 0) {
-                canvas.style.display = 'none';
-                msg.style.display = 'block';
-                if(myChart) myChart.destroy();
-                return;
-            }
-            
-            canvas.style.display = 'block';
-            msg.style.display = 'none';
-            
+    const month = document.getElementById('filterMonth').value;
+    try {
+        const res = await fetch(`/api/expenses/chart?month=${month}&user_id=${CURRENT_USER_ID}`);
+        const data = await res.json();
+        const canvas = document.getElementById('expenseDonutChart');
+        const msg = document.getElementById('noDataMessage');
+        
+        if (!data.chart_data || data.chart_data.length === 0) {
+            canvas.style.display = 'none';
+            msg.style.display = 'block';
             if(myChart) myChart.destroy();
-            
-            myChart = new Chart(canvas, {
-                type: 'doughnut',
-                data: {
-                    labels: data.chart_data.map(i => i.category),
-                    datasets: [{
-                        data: data.chart_data.map(i => i.sum),
-                        backgroundColor: ['#e74c3c', '#e67e22', '#f1c40f', '#3498db', '#9b59b6', '#1abc9c']
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        } catch (err) { console.error(err); }
-    }
-
+            return;
+        }
+        
+        canvas.style.display = 'block';
+        msg.style.display = 'none';
+        
+        if(myChart) myChart.destroy();
+        
+        myChart = new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels: data.chart_data.map(i => i.category),
+                datasets: [{
+                    data: data.chart_data.map(i => i.sum),
+                    backgroundColor: ['#E28F8F', '#F5D6D6', '#E2A96D', '#C86B85', '#A94A4A', '#F3E9DC'],
+                    borderWidth: 2,
+                    borderColor: '#5c0707'
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: '#ffffff',
+                            boxWidth: 20,
+                            font: {
+                                family: "'Inter', sans-serif",
+                                size: 16,
+                                weight: '600'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        backgroundColor: '#4c0505',
+                        borderRadius: 14,
+                        padding: 14,
+                        titleFont: { size: 16, weight: '700' },
+                        bodyFont: { size: 15, weight: '500' }
+                    }
+                }
+            }
+        });
+    } catch (err) { console.error(err); }
+}
     async function loadHistory() {
         const month = document.getElementById('filterMonth').value;
         const category = document.getElementById('filterCategory').value;
