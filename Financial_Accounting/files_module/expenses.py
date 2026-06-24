@@ -10,6 +10,7 @@ from validations.expenses_validation import (
 )
 
 def _serialize_row(row):
+    # Преобразуем строку БД (dict) в JSON-формат: Decimal -> float, даты -> ISO-строки
     result = dict(row)
     for key, value in result.items():
         if isinstance(value, Decimal):
@@ -20,6 +21,7 @@ def _serialize_row(row):
 
 
 def _get_request_data():
+    # Универсальный перехват данных: приоритет за JSON, иначе забираем данные из обычных веб-форм
     if request.json:
         return request.json
     return dict(request.forms)
@@ -31,6 +33,7 @@ def _get_request_data():
 
 @route('/api/expense-categories', method='GET')
 def get_expense_categories():
+    # Получение списка всех категорий расходов для выпадающих списков на фронте
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -47,9 +50,11 @@ def get_expense_categories():
 
 @route('/api/expense-categories', method='POST')
 def create_expense_category():
+    # Создание новой пользовательской категории расходов
     data = _get_request_data()
     name = data.get('name')
 
+    # Шаг 1: Валидация базовой длины и заполненности имени
     err = validate_category_name(name)
     if err:
         response.status = 400
@@ -65,11 +70,13 @@ def create_expense_category():
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
+            # Шаг 2: Проверяем базу на уникальность имени, чтобы избежать дублей
             cursor.execute('SELECT id FROM expense_categories WHERE name = %s', (name_clean,))
             if cursor.fetchone():
                 response.status = 400
                 return {'error': 'Категория расходов с таким названием уже существует'}
 
+            # Шаг 3: Добавляем запись через хранимую процедуру
             cursor.callproc('create_new_expense_category', (name_clean,))
         conn.commit()
         response.status = 201
@@ -88,9 +95,11 @@ def create_expense_category():
 
 @route('/api/expenses', method='POST')
 def add_expense():
+    # Регистрация новой расходной операции пользователя
     data = _get_request_data()
     user_id = data.get('user_id')
 
+    # Шаг 1: Валидация переданных полей (счета, категории, суммы, формата даты)
     errors, cleaned = validate_create_expense(data)
     if errors:
         response.status = 400
@@ -99,6 +108,7 @@ def add_expense():
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
+            # Шаг 2: Проверка существования счета и его принадлежности текущему пользователю
             cursor.execute(
                 'SELECT id_card, balance FROM accounts WHERE id_card = %s AND id_user = %s',
                 (cleaned['id_card'], user_id)
@@ -108,10 +118,12 @@ def add_expense():
                 response.status = 400
                 return {'error': 'Указанный счёт не найден или не принадлежит пользователю'}
 
+            # Шаг 3: Проверка баланса на бэкенде перед списанием
             if float(account['balance']) < cleaned['sum']:
                 response.status = 400
                 return {'error': f"Недостаточно средств. Текущий баланс: {account['balance']} ₽"}
 
+            # Шаг 4: Вызов процедуры вставки расхода
             cursor.callproc('create_new_expenses', (
                 cleaned['id_category'],
                 cleaned['id_card'],
@@ -132,10 +144,13 @@ def add_expense():
 
 @route('/api/expenses/history', method='GET')
 def get_expenses_history():
+    # Получение списка расходов с фильтрацией по месяцам и категориям
     user_id = request.query.get('user_id')
+    # Если месяц не выбран — берем текущий по умолчанию (ГГГГ-ММ)
     selected_month = request.query.get('month') or date.today().strftime('%Y-%m')
     id_category = request.query.get('id_category') or 'all'
 
+    # Базовый SQL-запрос с объединением (JOIN) таблиц счетов и категорий
     query = """
         SELECT e.id_expense, e.sum, e.date_time, c.name AS category_name, a.name_card
         FROM expenses e
@@ -146,10 +161,12 @@ def get_expenses_history():
     """
     params = [user_id, selected_month]
 
+    # Динамическая подстановка фильтра по категории, если выбрана не вкладка 'all'
     if id_category != 'all':
         query += " AND e.id_category = %s"
         params.append(int(id_category))
 
+    # Сортировка: сначала свежие операции
     query += " ORDER BY e.date_time DESC, e.id_expense DESC"
 
     conn = get_connection()
@@ -157,6 +174,7 @@ def get_expenses_history():
         with conn.cursor() as cursor:
             cursor.execute(query, params)
             rows = cursor.fetchall()
+        # Сериализуем каждую строку для корректной JSON-передачи дат и чисел
         return {'history': [_serialize_row(r) for r in rows]}
     except Exception as e:
         response.status = 500
@@ -167,9 +185,11 @@ def get_expenses_history():
 
 @route('/api/expenses/chart', method='GET')
 def get_expenses_chart_data():
+    # Агрегация сумм по категориям для построения круговой диаграммы (pie-chart)
     user_id = request.query.get('user_id')
     selected_month = request.query.get('month') or date.today().strftime('%Y-%m')
 
+    # Группировка (GROUP BY) и суммирование расходов за указанный месяц
     query = """
         SELECT c.name AS category_name, SUM(e.sum) AS total_sum
         FROM expenses e
@@ -187,6 +207,7 @@ def get_expenses_chart_data():
             cursor.execute(query, [user_id, selected_month])
             rows = cursor.fetchall()
         
+        # Мапим данные в формат ключей, удобный для JS-библиотек графиков
         chart_data = [{'category': r['category_name'], 'sum': float(r['total_sum'])} for r in rows]
         return {'chart_data': chart_data}
     except Exception as e:
@@ -208,7 +229,7 @@ def delete_expense(expense_id):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # Проверяем, существует ли расход и принадлежит ли он пользователю
+            # Шаг 1: Проверяем, существует ли расход и принадлежит ли он именно этому юзеру
             cursor.execute('''
                 SELECT e.id_expense
                 FROM expenses e
@@ -221,7 +242,7 @@ def delete_expense(expense_id):
                 response.status = 404
                 return {'error': 'Расход не найден или доступ ограничен'}
 
-            # Просто вызываем удаление строки. Всю зеркальную логику выполнит СУБД!
+            # Шаг 2: Вызываем удаление строки. Всю зеркальную логику выполнит СУБД!
             cursor.callproc('delete_expense', (expense_id,))
         
         conn.commit()

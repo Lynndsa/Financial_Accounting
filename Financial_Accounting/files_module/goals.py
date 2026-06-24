@@ -48,6 +48,7 @@ def get_goals():
         response.status = 400
         return {'error': 'Параметр user_id обязателен'}
 
+    # Валидация входного ID пользователя
     err = validate_id(id_user, 'user_id')
     if err:
         response.status = 400
@@ -56,6 +57,7 @@ def get_goals():
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
+            # Выборка активных целей с сортировкой (сначала с дедлайнами, затем без)
             cursor.execute(
                 'SELECT * FROM goals WHERE id_user = %s AND is_active = 1 '
                 'ORDER BY deadline IS NULL ASC, deadline ASC',
@@ -63,6 +65,7 @@ def get_goals():
             )
             rows = cursor.fetchall()
 
+        # Сериализация строк и расчет вычисляемых полей для фронтенда (прогресс и статус)
         goals_list = [_serialize_goal(row) for row in rows]
         for goal in goals_list:
             target = goal.get('target_amount') or 0
@@ -86,6 +89,7 @@ def get_goal(goal_id):
         response.status = 400
         return {'error': 'Параметр user_id обязателен'}
 
+    # Валидация ID пользователя и ID искомой цели
     err = validate_id(id_user, 'user_id') or validate_id(goal_id, 'id')
     if err:
         response.status = 400
@@ -94,6 +98,7 @@ def get_goal(goal_id):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
+            # Строгая проверка: ищем запись, принадлежащую именно этому user_id
             cursor.execute(
                 'SELECT * FROM goals WHERE id = %s AND id_user = %s',
                 (goal_id, id_user)
@@ -125,12 +130,14 @@ def create_goal():
 
     conn = get_connection()
     try:
+        # Комплексная валидация полей формы и проверка на уникальность имени в БД
         errors, cleaned = validate_create_goal(data, conn, id_user)
         if errors:
             response.status = 400
             return {'errors': errors}
 
         with conn.cursor() as cursor:
+            # Проверяем, существует ли привязываемая карта и принадлежит ли она юзеру
             cursor.execute(
                 'SELECT id_card FROM accounts WHERE id_card = %s AND id_user = %s',
                 (id_card, id_user)
@@ -175,8 +182,10 @@ def update_goal(goal_id):
 
     conn = get_connection()
     try:
+        # Валидация основных изменяемых полей (лимит имени 50 символов и уникальность)
         errors, cleaned = validate_update_goal(data, conn, id_user, goal_id)
 
+        # Отдельная валидация и очистка текстового описания
         description_raw = data.get('description')
         desc_err = validate_description(description_raw)
         if desc_err:
@@ -192,6 +201,7 @@ def update_goal(goal_id):
             return {'errors': errors}
 
         with conn.cursor() as cursor:
+            # Запрашиваем текущие значения из БД для реализации частичного обновления (coalesce на бэке)
             cursor.execute(
                 'SELECT name, target_amount, deadline, description FROM goals WHERE id = %s AND id_user = %s',
                 (goal_id, id_user)
@@ -202,6 +212,7 @@ def update_goal(goal_id):
             response.status = 404
             return {'error': 'Цель не найдена'}
 
+        # Формируем итоговые значения: если поле не передано в запросе, берем старое значение из БД
         final_name = cleaned['name'] if cleaned['name'] is not None else current_db_row['name']
         final_target = cleaned['target_amount'] if cleaned['target_amount'] is not None else float(current_db_row['target_amount'])
         
@@ -214,6 +225,7 @@ def update_goal(goal_id):
         final_description = cleaned['description'] if 'description' in data else current_db_row['description']
 
         with conn.cursor() as cursor:
+            # Вызов процедуры перезаписи измененных метаданных цели
             cursor.callproc('update_goals', (
                 goal_id,
                 final_name,
@@ -242,11 +254,13 @@ def delete_goal(goal_id):
 
     conn = get_connection()
     try:
+        # Безопасность: проверяем, что удаляемая запись принадлежит автору запроса
         if not _goal_belongs_to_user(conn, goal_id, id_user):
             response.status = 404
             return {'error': 'Цель не найдена'}
 
         with conn.cursor() as cursor:
+            # Процедура удаляет цель (или меняет флаг удаления в зависимоти от логики БД)
             cursor.callproc('delete_goals', (goal_id,))
         conn.commit()
         return {'message': 'Цель успешно удалена'}
@@ -268,6 +282,7 @@ def topup_goal(goal_id):
     id_user = data.get('user_id')
     amount = data.get('amount')
 
+    # Проверка корректности переданных ID и суммы пополнения
     id_err = validate_id(id_user, 'user_id') or validate_id(goal_id, 'id')
     if id_err:
         response.status = 400
@@ -282,7 +297,7 @@ def topup_goal(goal_id):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # 1. Получаем текущие данные о цели
+            # 1. Загружаем текущие параметры финансовой цели
             cursor.execute(
                 'SELECT current_amount, target_amount, id_card, is_active FROM goals WHERE id = %s AND id_user = %s',
                 (goal_id, id_user)
@@ -292,6 +307,7 @@ def topup_goal(goal_id):
                 response.status = 404
                 return {'error': 'Цель не найдена'}
 
+            # Проверка бизнес-логики: нельзя слать деньги в закрытую цель
             if not goal_row['is_active']:
                 response.status = 400
                 return {'error': 'Эта цель уже закрыта или заархивирована'}
@@ -301,7 +317,7 @@ def topup_goal(goal_id):
                 response.status = 400
                 return {'error': 'К этой цели не привязан счет для списания'}
 
-            # 2. Проверяем баланс карты на бэкенде
+            # 2. Проверяем баланс карты на стороне бэкенда перед транзакцией
             cursor.execute('SELECT balance FROM accounts WHERE id_card = %s', (id_card,))
             account_row = cursor.fetchone()
             if not account_row:
@@ -313,13 +329,15 @@ def topup_goal(goal_id):
                 return {'error': f"На счете недостаточно средств. Баланс: {account_row['balance']} ₽"}
 
             # 3. ОБНОВЛЕНИЕ СУММЫ ЦЕЛИ
-            # Триггер goals_AFTER_UPDATE перехватит это изменение, посчитает v_diff и добавит системный расход.
+            # Рассчитываем новое состояние накоплений и проверяем, выполнена ли цель
             new_amount = float(goal_row['current_amount']) + topup_sum
             target_amount = float(goal_row['target_amount'])
             
             is_completed = new_amount >= target_amount
             new_active_status = 0 if is_completed else 1
 
+            # Выполняем обычный UPDATE. Автоматический расчет разницы и логирование системного 
+            # расхода со счета переложено на СУБД (триггер goals_AFTER_UPDATE).
             cursor.execute(
                 'UPDATE goals SET current_amount = %s, is_active = %s WHERE id = %s',
                 (new_amount, new_active_status, goal_id)
@@ -350,11 +368,13 @@ def archive_goal(goal_id):
 
     conn = get_connection()
     try:
+        # Проверка принадлежности цели текущему пользователю
         if not _goal_belongs_to_user(conn, goal_id, id_user):
             response.status = 404
             return {'error': 'Цель не найдена'}
 
         with conn.cursor() as cursor:
+            # Деактивация записи без удаления физической строки из таблицы
             cursor.execute('UPDATE goals SET is_active = 0 WHERE id = %s', (goal_id,))
         conn.commit()
         return {'message': 'Цель архивирована'}
