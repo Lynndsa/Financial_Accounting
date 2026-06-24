@@ -107,11 +107,11 @@
 
         document.getElementById('toggleHistoryBtn').addEventListener('click', () => {
             const historyCard = document.getElementById('historyCard');
-            if (historyCard.style.display === 'block') {
-                historyCard.style.display = 'none';
+            if (historyCard.classList.contains('visible')) {
+                historyCard.classList.remove('visible');
                 document.getElementById('toggleHistoryBtn').innerText = 'Показать историю операций';
             } else {
-                historyCard.style.display = 'block';
+                historyCard.classList.add('visible');
                 document.getElementById('toggleHistoryBtn').innerText = 'Скрыть историю операций';
                 loadHistory();
             }

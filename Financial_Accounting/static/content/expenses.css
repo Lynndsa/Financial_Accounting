@@ -223,9 +223,15 @@ select.form-control {
     margin: 2.5rem 0;
 }
 
+/* ===== »—“Œ–»ﬂ Œœ≈–¿÷»… (— –€“¿ œŒ ”ÃŒÀ◊¿Õ»ﬁ) ===== */
 #historyCard {
+    display: none;
     animation: fadeIn 0.35s ease-in-out forwards;
 }
+
+    #historyCard.visible {
+        display: block;
+    }
 
 @keyframes fadeIn {
     from {
@@ -307,6 +313,7 @@ select.form-control {
         transform: scale(1.02);
     }
 
+/* ===== ¿ƒ¿œ“»¬ÕŒ—“‹ ===== */
 @media (max-width: 1200px) {
     .chart-container {
         height: 340px;
@@ -348,5 +355,44 @@ select.form-control {
     .chart-container {
         height: 280px;
         width: 280px;
+    }
+}
+
+@media (max-width: 480px) {
+    .goals-wrapper {
+        padding: 2rem 1.5rem;
+    }
+
+    .card-section-title {
+        font-size: 1.6rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-control {
+        height: 50px;
+        font-size: 1rem;
+        padding: 0 1.2rem;
+    }
+
+    .btn-submit,
+    .btn-secondary {
+        font-size: 1.1rem;
+        padding: 1rem 2rem;
+    }
+
+    .chart-container {
+        height: 220px;
+        width: 220px;
+    }
+
+    .modern-table th,
+    .modern-table td {
+        padding: 0.8rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-danger-xs {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
     }
 }
