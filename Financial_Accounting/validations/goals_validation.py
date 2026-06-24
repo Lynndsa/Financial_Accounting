@@ -1,11 +1,6 @@
-"""
-Файл отвечает за проверку (валидацию) данных, которые вводит пользователь.
-Защищает базу данных от некорректных типов, пустых строк и дат из будущего/прошлого.
-"""
-
 from datetime import datetime, date
 
-# Константы
+# Константы для жестких ограничений полей (бизнес-логика системы)
 MAX_NAME_LENGTH = 100         
 MAX_UPDATE_NAME_LENGTH = 50   
 MAX_DESCRIPTION_LENGTH = 200  
@@ -156,7 +151,7 @@ def validate_create_goal(data, conn, id_user):
     Главная функция для валидации СОЗДАНИЯ цели. 
     Принимает словарь из формы, соединение с БД и id_user.
     """
-    errors = {}
+    errors = {} # Словарь для накопления локальных ошибок по каждому полю
     
     name = data.get('name')
     target_amount = data.get('target_amount')
@@ -165,11 +160,11 @@ def validate_create_goal(data, conn, id_user):
     deadline = data.get('deadline')
     description = data.get('description')
 
+    # Шаг 1: Валидация имени + проверка на уникальность (дублирование) среди активных целей юзера
     err = validate_name(name, MAX_NAME_LENGTH)
     if err: 
         errors['name'] = err
     else:
-        # Проверка на дубликат имени среди активных целей пользователя
         with conn.cursor() as cursor:
             cursor.execute(
                 'SELECT id FROM goals WHERE id_user = %s AND name = %s AND is_active = 1',
@@ -178,12 +173,14 @@ def validate_create_goal(data, conn, id_user):
             if cursor.fetchone():
                 errors['name'] = 'Цель с таким названием уже существует'
 
+    # Шаг 2: Валидация финансовых параметров (целевой и текущей суммы)
     err = validate_target_amount(target_amount)
     if err: errors['target_amount'] = err
 
     err = validate_current_amount(current_amount, target_amount if 'target_amount' not in errors else None)
     if err: errors['current_amount'] = err
 
+    # Шаг 3: Валидация метаданных (карта, дедлайн, текстовое описание)
     err = validate_id_card(id_card)
     if err: errors['id_card'] = err
 
@@ -193,7 +190,7 @@ def validate_create_goal(data, conn, id_user):
     err = validate_description(description)
     if err: errors['description'] = err
 
-    # Если ошибок нет, создаем "cleaned" — словарь с правильными типами данных для БД
+    # Шаг 4: Сборка очищенных данных (приведение типов) для прямой безопасной передачи в БД
     cleaned = {}
     if not errors:
         cleaned = {
@@ -216,13 +213,14 @@ def validate_update_goal(data, conn, id_user, goal_id):
     errors = {}
     cleaned = {}
 
-    # Проверяем имя (если оно пришло в запросе)
+    # Шаг 1: Проверка имени (если оно пришло в PUT/POST-запросе для частичного изменения)
     if 'name' in data and data.get('name') not in (None, ''):
-        err = validate_name(data.get('name'), MAX_UPDATE_NAME_LENGTH) # Передаем лимит 50!
+        # На изменение действует более строгое ограничение СУБД — 50 символов!
+        err = validate_name(data.get('name'), MAX_UPDATE_NAME_LENGTH) 
         if err: 
             errors['name'] = err
         else:
-            # Проверяем на дубликат (но игнорируем текущую обновляемую цель по goal_id)
+            # Проверяем уникальность: дубликаты ищем везде, кроме строки с текущим goal_id
             with conn.cursor() as cursor:
                 cursor.execute(
                     'SELECT id FROM goals WHERE id_user = %s AND name = %s AND id != %s AND is_active = 1',
@@ -236,7 +234,7 @@ def validate_update_goal(data, conn, id_user, goal_id):
     else:
         cleaned['name'] = None
 
-    # Проверяем целевую сумму
+    # Шаг 2: Валидация целевой суммы (если передана для изменения)
     if 'target_amount' in data and data.get('target_amount') not in (None, ''):
         err = validate_target_amount(data.get('target_amount'))
         if err: errors['target_amount'] = err
@@ -244,7 +242,7 @@ def validate_update_goal(data, conn, id_user, goal_id):
     else:
         cleaned['target_amount'] = None
 
-    # Проверяем дедлайн
+    # Шаг 3: Валидация обновленного срока выполнения (дедлайна)
     if 'deadline' in data and data.get('deadline') not in (None, ''):
         err = validate_deadline(data.get('deadline'))
         if err: errors['deadline'] = err

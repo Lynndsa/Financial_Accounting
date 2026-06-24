@@ -24,7 +24,7 @@
     <UnitTestPattern>test*.py</UnitTestPattern>
     <UnitTestRootDirectory>.</UnitTestRootDirectory>
     <InterpreterId>MSBuild|env4|$(MSBuildProjectFullPath)</InterpreterId>
-    <InterpreterId>MSBuild|env2|$(MSBuildProjectFullPath)</InterpreterId>
+    <InterpreterId>MSBuild|env1|$(MSBuildProjectFullPath)</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -54,7 +54,15 @@
     <Compile Include="tests\test_auth.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="tests\test_validation.py">
+    <Compile Include="tests\test_expenses.py" />
+    <Compile Include="tests\test_goals.py" />
+    <Compile Include="tests\test_validation_expenses.py" />
+    <Compile Include="tests\test_validation_goals.py" />
+    <Compile Include="tests\test_validation_incomes.py" />
+    <Compile Include="tests\test_income.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="tests\test_validation _auth_and_account.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="validations\auth_validation.py">
