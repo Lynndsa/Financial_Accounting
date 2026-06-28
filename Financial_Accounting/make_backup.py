@@ -4,6 +4,25 @@ import threading
 from datetime import datetime
 from database.db import get_connection
 
+def clear_old_backups(backup_dir):
+    """Удаление файлов бэкапов, которые старше 7 дней"""
+    try:
+        now = time.time()
+        # 7 дней
+        max_age_seconds = 7 * 24 * 60 * 60 
+        
+        if os.path.exists(backup_dir):
+            for filename in os.listdir(backup_dir):
+                file_path = os.path.join(backup_dir, filename)
+                
+                # Проверяем, что это именно .sql файл и его время изменения вышло за лимит
+                if os.path.isfile(file_path) and filename.endswith('.sql'):
+                    file_modified_time = os.path.getmtime(file_path)
+                    if (now - file_modified_time) > max_age_seconds:
+                        os.remove(file_path)
+    except Exception as e:
+        print(f"Ошибка при очистке старых бэкапов: {e}")
+
 def create_sql_file():
     """Сборка полного дампа БД (структура, данные, триггеры, процедуры)"""
     backup_path = ""
@@ -19,13 +38,16 @@ def create_sql_file():
         if not os.path.exists(BACKUP_DIR):
             os.makedirs(BACKUP_DIR)
             
+        # Запуск очистки старых копий перед созданием новой
+        clear_old_backups(BACKUP_DIR)
+            
         # Генерация уникального имени файла по дате
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f"backup_{DB_NAME}_{timestamp}.sql"
         backup_path = os.path.join(BACKUP_DIR, filename)
         
         with open(backup_path, "w", encoding="utf-8") as f:
-            # Отключение проверок связей и строгого режима дат для локального импорта
+            # Отключение провевок связей и строгого режима дат для локального импорта
             f.write(f"-- Полный бэкап создан: {datetime.now()}\n\n")
             f.write("SET FOREIGN_KEY_CHECKS = 0;\n")
             f.write("SET UNIQUE_CHECKS = 0;\n")
@@ -74,7 +96,6 @@ def create_sql_file():
                     trigger_name = list(trig.values())[0]
                     cursor.execute(f"SHOW CREATE TRIGGER `{trigger_name}`")
                     trig_stmt = cursor.fetchone()
-                    # Проверяем регистр ключей, который отдает сервер
                     trig_sql = trig_stmt.get('SQL Original Statement') or trig_stmt.get('sql_original_statement')
                     if trig_sql:
                         f.write(f"DROP TRIGGER IF EXISTS `{trigger_name}`//\n{trig_sql}//\n\n")
