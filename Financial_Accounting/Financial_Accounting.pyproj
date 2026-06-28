@@ -51,6 +51,9 @@
     <Compile Include="files_module\income.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="make_backup.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="tests\test_auth.py">
       <SubType>Code</SubType>
     </Compile>

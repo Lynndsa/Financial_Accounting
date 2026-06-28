@@ -66,15 +66,12 @@ def login():
                         p.email,
                         u.username,
                         a.name_card,
-                        a.balance,
-                        c.name AS currency_name
+                        a.balance
                     FROM profiles p
                     JOIN user u
                         ON p.id_user = u.id_user
                     LEFT JOIN accounts a
                         ON u.id_user = a.id_user
-                    LEFT JOIN currencies c
-                        ON a.id_currencies = c.id_currencies
                     WHERE u.username = %s
                 """, (username,))
 
@@ -325,15 +322,12 @@ def personal_account():
                     p.email,
                     u.username,
                     a.name_card,
-                    a.balance,
-                    c.name AS currency_name
+                    a.balance
                 FROM profiles p
                 JOIN user u
                     ON p.id_user = u.id_user
                 LEFT JOIN accounts a
                     ON u.id_user = a.id_user
-                LEFT JOIN currencies c
-                    ON a.id_currencies = c.id_currencies
                 WHERE u.username = %s
             """, (username,))
 
@@ -392,15 +386,12 @@ def update_personal_account():
                         p.email,
                         u.username,
                         a.name_card,
-                        a.balance,
-                        c.name AS currency_name
+                        a.balance
                     FROM profiles p
                     JOIN user u
                         ON p.id_user = u.id_user
                     LEFT JOIN accounts a
                         ON u.id_user = a.id_user
-                    LEFT JOIN currencies c
-                        ON a.id_currencies = c.id_currencies
                     WHERE u.username = %s
                 """, (username,))
 
@@ -467,15 +458,12 @@ def update_personal_account():
                     p.email,
                     u.username,
                     a.name_card,
-                    a.balance,
-                    c.name AS currency_name
+                    a.balance
                 FROM profiles p
                 JOIN user u
                     ON p.id_user = u.id_user
                 LEFT JOIN accounts a
                     ON u.id_user = a.id_user
-                LEFT JOIN currencies c
-                    ON a.id_currencies = c.id_currencies
                 WHERE u.username = %s
             """, (username,))
 
