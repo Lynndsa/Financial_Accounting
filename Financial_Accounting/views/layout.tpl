@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
     <link rel="stylesheet" type="text/css" href="/static/content/bootstrap.min.css" />
-    <!-- Стиль берётся строго из файла site.css -->
     <link rel="stylesheet" type="text/css" href="/static/content/site.css" />
     <script src="/static/scripts/modernizr-2.6.2.js"></script>
 </head>
 
 <body>
-    <!-- Левая панель навигации (Сайдбар) -->
     <aside class="sidebar">
         <div class="menu-top">
             <a href="/personal_account" class="menu-item">Личный кабинет</a>
@@ -25,7 +23,6 @@
         </div>
     </aside>
 
-    <!-- Основной контент справа -->
     <div class="container body-content">
         {{!base}}
     </div>

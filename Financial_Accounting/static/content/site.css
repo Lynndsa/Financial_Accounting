@@ -6,10 +6,10 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #BA5555; /* Базовый розовато-красный фон всей страницы */
+    background-color: #BA5555; 
     color: #ffffff;
     min-height: 100vh;
-    display: flex; /* Выстраивает сайдбар и контент в один ряд */
+    display: flex; 
     overflow-x: hidden;
     position: relative;
     width: 100%;
@@ -37,7 +37,7 @@ body {
 .menu-top {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem; /* Зазор между кнопками */
+    gap: 1.5rem; 
     width: 100%;
 }
 
@@ -73,14 +73,12 @@ body {
 }
 
     .btn-logout-sidebar:hover {
-        color: #ef4444 !important; /* Краснеет при наведении */
+        color: #ef4444 !important; 
         background-color: rgba(239, 68, 68, 0.05);
     }
-
-/* ОСНОВНОЙ КОНТЕНТ: Сдвинут вправо ровно на ширину фиксированного сайдбара */
 .body-content, .main-content {
     flex: 1;
-    margin-left: 240px; /* Четкий отступ под ширину панели */
+    margin-left: 240px; 
     padding: 4rem 3rem 4rem 4rem;
     display: flex;
     flex-direction: column;
@@ -90,14 +88,12 @@ body {
     width: calc(100% - 240px);
 }
 
-/* Ограничения Bootstrap для инпутов убраны, чтобы они слушались новые стили */
 input,
 select,
 textarea {
     max-width: 100%;
 }
 
-/* Стили валидации */
 .field-validation-error {
     color: #fca5a5;
     font-size: 0.95rem;

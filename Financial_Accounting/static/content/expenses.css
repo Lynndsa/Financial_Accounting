@@ -223,7 +223,6 @@ select.form-control {
     margin: 2.5rem 0;
 }
 
-/* ===== хярнпхъ ноепюжхи (яйпшрю он слнквюмхч) ===== */
 #historyCard {
     display: none;
     animation: fadeIn 0.35s ease-in-out forwards;
@@ -313,7 +312,6 @@ select.form-control {
         transform: scale(1.02);
     }
 
-/* ===== юдюорхбмнярэ ===== */
 @media (max-width: 1200px) {
     .chart-container {
         height: 340px;

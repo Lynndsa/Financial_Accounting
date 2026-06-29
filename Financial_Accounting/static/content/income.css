@@ -4,7 +4,6 @@
     box-sizing: border-box;
 }
 
-/* Верхняя скошенная фигура и её объемная тень над контентом */
 body::before {
     content: "";
     position: absolute;
@@ -29,7 +28,6 @@ body::after {
     z-index: -1;
 }
 
-/* --- СТИЛИ СТРАНИЦЫ ДОХОДОВ --- */
 
 .main-content {
     width: 100%;
@@ -226,7 +224,6 @@ select.form-control {
     margin: 2.5rem 0;
 }
 
-/* ===== ИСТОРИЯ ОПЕРАЦИЙ (СКРЫТА ПО УМОЛЧАНИЮ) ===== */
 #historyCard {
     display: none;
     animation: fadeIn 0.35s ease-in-out forwards;
@@ -316,7 +313,6 @@ select.form-control {
         transform: scale(1.02);
     }
 
-/* ===== АДАПТИВНОСТЬ ===== */
 @media (max-width: 1200px) {
     .chart-container {
         height: 340px;

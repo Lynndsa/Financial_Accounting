@@ -14,7 +14,6 @@
         <h2>Авторизация</h2>
         <h3>Введите ваш логин и пароль</h3>
 
-        <!-- Блок уведомлений -->
         % if error:
             <div class="alert alert-error">{{error}}</div>
         % end

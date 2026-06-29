@@ -6,12 +6,12 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #BA5555; /* Розовато-красный базовый фон всей страницы */
+    background-color: #BA5555; 
     color: #ffffff;
     min-height: 100vh;
     display: flex;
-    align-items: center; /* Центрируем форму по вертикали */
-    justify-content: flex-start; /* Карточка прижата к левой стороне */
+    align-items: center; 
+    justify-content: flex-start;
     padding: 1.5rem 4% 3.5rem 8%;
     overflow-x: hidden;
     position: relative;
@@ -29,7 +29,6 @@ body {
         z-index: -2;
     }
 
-    /* СЛОЙ 2 (ВЕРХНИЙ): Фигура посветлее */
     body::after {
         content: "";
         position: absolute;
@@ -42,13 +41,13 @@ body {
         z-index: -1;
     }
 
-/* Темно-бордовая карточка авторизации — УМЕНЬШИЛИ ШИРИНУ */
+
 .auth-card {
     background-color: #5c0707;
     border-radius: 40px;
-    padding: 3rem 3rem; /* Сбалансировали внутренние отступы под новую ширину */
+    padding: 3rem 3rem;
     width: 100%;
-    max-width: 520px; /* Сузили форму с 680px до 520px для идеального баланса */
+    max-width: 520px; 
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -72,7 +71,6 @@ body {
         text-align: center;
     }
 
-/* Форма растягивается на всю карточку */
 form {
     width: 100%;
     display: flex;
@@ -80,19 +78,18 @@ form {
     align-items: center;
 }
 
-/* Группа полей: Подпись слева, инпут справа */
 .input-group {
     display: flex;
     align-items: center;
     width: 100%;
     margin-bottom: 1.8rem;
-    gap: 2rem; /* Слегка уменьшили зазор, чтобы инпуты оставались просторными */
+    gap: 2rem; 
 }
 
     .input-group label {
         font-size: 1.4rem;
         font-weight: 600;
-        width: 90px; /* Сделали ширину подписи 90px, чтобы дать больше места полям ввода */
+        width: 90px;
         text-align: left;
         flex-shrink: 0;
     }
@@ -115,12 +112,11 @@ form {
             box-shadow: 0 0 0 4px rgba(180, 0, 0, 0.4);
         }
 
-/* Кнопка Войти */
 .btn-submit {
     background-color: #b15d5d;
     color: #ffffff;
     border: none;
-    padding: 1.2rem 4rem; /* Сделали кнопку чуть компактнее по бокам */
+    padding: 1.2rem 4rem; 
     font-size: 1.35rem;
     font-weight: 700;
     border-radius: 18px;
@@ -129,7 +125,7 @@ form {
     margin-bottom: 1.8rem;
     transition: all 0.2s ease;
     width: auto;
-    min-width: 260px; /* Подстроили минимальную ширину под размер формы */
+    min-width: 260px; 
 }
 
     .btn-submit:hover {
@@ -138,7 +134,6 @@ form {
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
     }
 
-/* Текстовая кнопка "Нет аккаунта?" */
 .btn-link {
     background: none;
     border: none;
@@ -154,7 +149,6 @@ form {
         color: #ffffff;
     }
 
-/* Стили для системных уведомлений */
 .alert {
     width: 100%;
     padding: 0.8rem 1.2rem;
@@ -176,7 +170,6 @@ form {
     color: #86efac;
 }
 
-/* Адаптивность для мобильных телефонов */
 @media (max-width: 900px) {
     body {
         padding: 6rem 1.5rem 1.5rem 1.5rem;

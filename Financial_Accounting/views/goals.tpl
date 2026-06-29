@@ -96,7 +96,6 @@
 </main>
 <script>
 (function () {
-    // Получаем ID авторизованного юзера и его счета из Bottle шаблонизатора
     var CURRENT_USER_ID = {{user_id}};
     var CURRENT_CARD_ID = {{card_id}};
 
@@ -163,7 +162,6 @@
     }
 
     function loadGoals() {
-        // Добавляем параметр user_id в GET запрос
         apiRequest(apiBase + '?user_id=' + CURRENT_USER_ID)
             .then(function (data) {
                 if (data.error) {
@@ -178,7 +176,6 @@
             });
     }
 
-    // РЕНДЕРИНГ КАРТОЧЕК: Переводит список целей из табличного формата в блочные карточки с прогресс-барами
     function renderGoals(goals) {
         if (!goals.length) {
             tableBody.innerHTML = '<div class="loading-status">Пока нет целей</div>';
@@ -192,9 +189,8 @@
             item.className = 'goal-item';
 
             var progress = goal.progress_percent || 0;
-            if (progress > 100) progress = 100; // Ограничиваем заполнение шкалы до 100%
+            if (progress > 100) progress = 100; 
 
-            // Генерируем адаптивную разметку для карточки с прогресс-баром
             item.innerHTML =
                 '<div class="goal-header">' +
                     '<div class="goal-title">' + goal.name + ' — ' + goal.current_amount + ' ₽ из ' + goal.target_amount + ' ₽</div>' +
@@ -253,7 +249,6 @@
 
     function deleteGoal(id) {
         if (!confirm('Удалить эту цель?')) return;
-        // Передаем user_id параметром строки в DELETE
         apiRequest(apiBase + '/' + id + '?user_id=' + CURRENT_USER_ID, { method: 'DELETE' })
             .then(function (data) {
                 if (data.error) {
@@ -323,12 +318,11 @@
         var id = idField.value;
 
         if (id) {
-            // Запрос на ОБНОВЛЕНИЕ (PUT)
             apiRequest(apiBase + '/' + id, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    user_id: CURRENT_USER_ID, // Передаем владельца
+                    user_id: CURRENT_USER_ID, 
                     name: nameField.value,
                     target_amount: targetField.value,
                     deadline: deadlineField.value || null,
@@ -350,7 +344,6 @@
                     console.error(err);
                 });
         } else {
-            // Запрос на СОЗДАНИЕ (POST)
             apiRequest(apiBase, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

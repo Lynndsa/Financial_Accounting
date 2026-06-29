@@ -12,7 +12,6 @@
 <body>
     <header class="header">
         <div class="logo">
-            <!-- Замените src на вашу иконку, если она есть -->
             <img src="static/img/ava.png" alt="" class="logo-icon" onerror="this.style.display='none'">
             <span>Finance Helper</span>
         </div>
@@ -33,7 +32,6 @@
             </form>
         </div>
         <div class="content-right">
-            <!-- Положите картинку Крабса по этому пути или замените путь на свой -->
             <img src="static/img/misterCrabs.png" alt="Mr. Krabs with money" class="hero-image">
         </div>
     </main>
